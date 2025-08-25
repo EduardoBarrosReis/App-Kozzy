@@ -1,0 +1,56 @@
+<div class="login-container">
+    <div class="logo-container">
+        <div class="logo" role="img" aria-label="KOZZY Distribuidora">KOZZY</div>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+            <label for="email" class="form-label">E-mail ou usuário</label>
+            <input 
+                type="text" 
+                id="email" 
+                formControlName="email" 
+                class="form-input" 
+                placeholder="Digite seu e-mail ou usuário"
+                autocomplete="username"
+                autofocus
+                [class.error]="loginForm.controls['email'].invalid && loginForm.controls['email'].touched"
+                [class.success]="loginForm.controls['email'].valid && loginForm.controls['email'].touched"
+            >
+            <span class="input-icon user-icon" aria-hidden="true"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="password" class="form-label">Senha</label>
+            <input 
+                [type]="passwordFieldType" 
+                id="password" 
+                formControlName="password" 
+                class="form-input" 
+                placeholder="Digite sua senha"
+                autocomplete="current-password"
+                [class.error]="loginForm.controls['password'].invalid && loginForm.controls['password'].touched"
+                [class.success]="loginForm.controls['password'].valid && loginForm.controls['password'].touched"
+            >
+            <span 
+                class="password-toggle"
+                [class.eye-icon]="passwordFieldType === 'password'"
+                [class.eye-slash-icon]="passwordFieldType === 'text'"
+                (click)="togglePasswordVisibility()"
+                aria-label="Mostrar/ocultar senha" 
+                role="button" 
+                tabindex="0">
+            </span>
+        </div>
+
+        <div class="form-options">
+            <div class="checkbox-container">
+                <input type="checkbox" id="remember" formControlName="rememberMe">
+                <label for="remember" class="checkbox-label">Lembrar de mim</label>
+            </div>
+            <a href="#" class="forgot-password">Recuperar senha</a>
+        </div>
+
+        <button type="submit" class="login-button" [disabled]="loginForm.invalid">Login</button>
+    </form>
+</div>
