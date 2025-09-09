@@ -1,9 +1,16 @@
 import { ApplicationConfig } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http'; // Importe se for usar HttpClient
 
 import { routes } from './app.routes';
-import { provideClientHydration } from '@angular/platform-browser';
+import { AuthService } from './auth.service'; // Importe o AuthService
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideRouter(routes), provideClientHydration()]
+  providers: [
+    provideRouter(routes), // Configura o roteamento da aplicação
+    provideHttpClient(), // Fornece o HttpClient para requisições HTTP (se necessário)
+    AuthService // Fornece o AuthService para injeção de dependência em toda a aplicação
+  ]
 };
+
+

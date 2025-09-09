@@ -1,0 +1,281 @@
+<div class="supervisor-dashboard">
+  
+  <!-- Header com informações do usuário e logout -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="main-title">Visão Geral do Supervisor</h1>
+        <p class="subtitle">Monitoramento e acompanhamento em tempo real dos chamados da equipe</p>
+      </div>
+      
+      <!-- Área do usuário com logout -->
+      <div class="user-area">
+        <div class="user-info" *ngIf="usuarioLogado">
+          <div class="user-avatar">
+            <span>{{ usuarioLogado.nome.charAt(0).toUpperCase() }}</span>
+          </div>
+          <div class="user-details">
+            <span class="user-name">{{ usuarioLogado.nome }}</span>
+            <span class="user-role">Supervisor</span>
+          </div>
+        </div>
+        
+        <button (click)="logout()" class="logout-btn" title="Sair do sistema">
+          <svg viewBox="0 0 24 24" class="logout-icon">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16,17 21,12 16,7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          Sair
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- KPIs -->
+  <section class="kpis-section">
+    <div class="kpis-grid">
+      <div *ngFor="let kpi of kpis" class="kpi-card" [class]="'kpi-' + kpi.color">
+        <div class="kpi-icon">
+          <span>{{ kpi.icon }}</span>
+        </div>
+        <div class="kpi-content">
+          <h3 class="kpi-value">{{ kpi.value }}</h3>
+          <p class="kpi-label">{{ kpi.label }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filtros Avançados -->
+  <section class="filters-section">
+    <div class="filters-container">
+      <h3 class="filters-title">Filtros Avançados</h3>
+      
+      <div class="filters-grid">
+        <!-- Campo de Busca -->
+        <div class="filter-group">
+          <label for="busca" class="filter-label">Buscar</label>
+          <input 
+            id="busca"
+            type="text" 
+            [(ngModel)]="filtros.busca"
+            placeholder="ID, cliente ou assunto..."
+            class="filter-input">
+        </div>
+
+        <!-- Status -->
+        <div class="filter-group">
+          <label for="status" class="filter-label">Status</label>
+          <select id="status" [(ngModel)]="filtros.status" class="filter-select">
+            <option value="todos">Todos</option>
+            <option value="aberto">Abertos</option>
+            <option value="em-andamento">Em andamento</option>
+            <option value="concluido">Concluídos</option>
+          </select>
+        </div>
+
+        <!-- Prioridade -->
+        <div class="filter-group">
+          <label for="prioridade" class="filter-label">Prioridade</label>
+          <select id="prioridade" [(ngModel)]="filtros.prioridade" class="filter-select">
+            <option value="todas">Todas</option>
+            <option value="alta">Alta</option>
+            <option value="media">Média</option>
+            <option value="baixa">Baixa</option>
+          </select>
+        </div>
+
+        <!-- Ordenação -->
+        <div class="filter-group">
+          <label for="ordenacao" class="filter-label">Ordenação</label>
+          <select id="ordenacao" [(ngModel)]="filtros.ordenacao" class="filter-select">
+            <option value="mais-recentes">Mais recentes</option>
+            <option value="mais-antigos">Mais antigos</option>
+            <option value="por-prioridade">Por prioridade</option>
+          </select>
+        </div>
+
+        <!-- Botão Limpar -->
+        <div class="filter-group filter-actions">
+          <button (click)="limparFiltros()" class="btn-clear-filters">
+            🗑️ Limpar filtros
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tabela de Chamados (Desktop) -->
+  <section class="chamados-section desktop-only">
+    <div class="table-container">
+      <h3 class="section-title">Chamados Ativos</h3>
+      
+      <div class="table-wrapper">
+        <table class="chamados-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Cliente</th>
+              <th>Assunto</th>
+              <th>Status</th>
+              <th>Atendente</th>
+              <th>Data</th>
+              <th>Prioridade</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let chamado of getChamadosFiltrados()" 
+                (click)="abrirChamado(chamado)"
+                class="table-row"
+                [class.row-novo]="chamado.isNovo">
+              
+              <td class="cell-id">{{ chamado.numero }}</td>
+              <td class="cell-cliente">{{ chamado.cliente }}</td>
+              <td class="cell-assunto">{{ chamado.assunto }}</td>
+              <td class="cell-status">
+                <span class="status-badge" [class]="getStatusClass(chamado.status)">
+                  {{ getStatusLabel(chamado.status) }}
+                </span>
+              </td>
+              <td class="cell-atendente">{{ chamado.atendente }}</td>
+              <td class="cell-data">{{ formatarData(chamado.dataAbertura) }}</td>
+              <td class="cell-prioridade">
+                <span class="prioridade-text" [class]="getPrioridadeClass(chamado.prioridade)">
+                  {{ getPrioridadeLabel(chamado.prioridade) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mensagem quando não há chamados -->
+      <div *ngIf="getChamadosFiltrados().length === 0" class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h4>Nenhum chamado encontrado</h4>
+        <p>Não há chamados que correspondam aos filtros selecionados.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cards de Chamados (Mobile) -->
+  <section class="chamados-section mobile-only">
+    <div class="cards-container">
+      <h3 class="section-title">Chamados Ativos</h3>
+      
+      <div class="chamados-cards">
+        <div *ngFor="let chamado of getChamadosFiltrados()" 
+             (click)="abrirChamado(chamado)"
+             class="chamado-card"
+             [class.card-novo]="chamado.isNovo">
+          
+          <!-- Header do Card -->
+          <div class="card-header">
+            <div class="card-title">
+              <span class="card-id">{{ chamado.numero }}</span>
+              <h4 class="card-assunto">{{ chamado.assunto }}</h4>
+            </div>
+            <span class="status-badge" [class]="getStatusClass(chamado.status)">
+              {{ getStatusLabel(chamado.status) }}
+            </span>
+          </div>
+
+          <!-- Conteúdo do Card -->
+          <div class="card-content">
+            <div class="card-info-grid">
+              <div class="info-item">
+                <span class="info-label">Cliente:</span>
+                <span class="info-value">{{ chamado.cliente }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Atendente:</span>
+                <span class="info-value">{{ chamado.atendente }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Data:</span>
+                <span class="info-value">{{ formatarData(chamado.dataAbertura) }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Prioridade:</span>
+                <span class="info-value" [class]="getPrioridadeClass(chamado.prioridade)">
+                  {{ getPrioridadeLabel(chamado.prioridade) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensagem quando não há chamados -->
+      <div *ngIf="getChamadosFiltrados().length === 0" class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h4>Nenhum chamado encontrado</h4>
+        <p>Não há chamados que correspondam aos filtros selecionados.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Chamados em Aberto Mais Antigos -->
+  <section class="antigos-section">
+    <div class="antigos-container">
+      <h3 class="section-title">
+        ⚠️ Chamados em Aberto Mais Antigos
+        <span class="title-subtitle">Requer atenção para possíveis atrasos</span>
+      </h3>
+      
+      <div class="antigos-list">
+        <div *ngFor="let chamado of getChamadosAbertosMaisAntigos()" 
+             (click)="destacarChamado(chamado)"
+             class="antigo-item">
+          
+          <div class="antigo-header">
+            <div class="antigo-id-cliente">
+              <span class="antigo-id">{{ chamado.numero }}</span>
+              <span class="antigo-cliente">{{ chamado.cliente }}</span>
+            </div>
+            <div class="antigo-dias">
+              <span class="dias-count">{{ calcularDiasEmAberto(chamado.dataAbertura) }}</span>
+              <span class="dias-label">dias</span>
+            </div>
+          </div>
+
+          <div class="antigo-content">
+            <p class="antigo-assunto">{{ chamado.assunto }}</p>
+            <div class="antigo-meta">
+              <span class="antigo-atendente">👤 {{ chamado.atendente }}</span>
+              <span class="antigo-data">📅 {{ formatarData(chamado.dataAbertura) }}</span>
+              <span class="antigo-prioridade" [class]="getPrioridadeClass(chamado.prioridade)">
+                🔥 {{ getPrioridadeLabel(chamado.prioridade) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensagem quando não há chamados antigos -->
+      <div *ngIf="getChamadosAbertosMaisAntigos().length === 0" class="empty-state">
+        <div class="empty-icon">✅</div>
+        <h4>Excelente trabalho!</h4>
+        <p>Não há chamados em aberto há muito tempo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Toast de Feedback -->
+  <div class="toast-container" [class.show]="toast.visible">
+    <div class="toast" [class]="'toast-' + toast.type">
+      <div class="toast-content">
+        <span class="toast-icon">
+          <span *ngIf="toast.type === 'success'">✅</span>
+          <span *ngIf="toast.type === 'info'">ℹ️</span>
+          <span *ngIf="toast.type === 'warning'">⚠️</span>
+          <span *ngIf="toast.type === 'error'">❌</span>
+        </span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+

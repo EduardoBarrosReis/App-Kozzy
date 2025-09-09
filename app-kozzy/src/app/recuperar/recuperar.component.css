@@ -13,7 +13,7 @@
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
-.login-container {
+.recover-password-container {
     background: #ffffff;
     border-radius: 16px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -25,7 +25,7 @@
     animation: fadeInUp 0.6s ease-out;
 }
 
-.login-container::before {
+.recover-password-container::before {
     content: "";
     position: absolute;
     top: 0;
@@ -104,69 +104,12 @@
     pointer-events: none;
 }
 
-.password-toggle {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #999;
-    font-size: 18px;
-    cursor: pointer;
-    transition: color 0.3s ease;
+/* Ícones usando Unicode */
+.user-icon::before {
+    content: '👤';
 }
 
-.password-toggle:hover {
-    color: #c41e3a;
-}
-
-.form-options {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.checkbox-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.checkbox-container input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: #c41e3a;
-    cursor: pointer;
-}
-
-.checkbox-label {
-    font-size: 14px;
-    color: #555;
-    cursor: pointer;
-    user-select: none;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.forgot-password {
-    color: #c41e3a;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    position: relative;
-    z-index: 10;  /* garante que o link fique por cima */
-    cursor: pointer;
-}
-
-.forgot-password:hover {
-    color: #a01729;
-    text-decoration: underline;
-}
-
-.login-button {
+.recover-button {
     width: 100%;
     height: 50px;
     background: linear-gradient(135deg, #c41e3a 0%, #e74c3c 100%);
@@ -180,56 +123,52 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin-bottom: 20px; /* Espaçamento antes do link de voltar */
 }
 
-.login-button:hover {
+.recover-button:hover {
     background: linear-gradient(135deg, #a01729 0%, #c0392b 100%);
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(196, 30, 58, 0.3);
 }
 
-.login-button:active {
+.recover-button:active {
     transform: translateY(0);
 }
 
-.login-button:focus {
+.recover-button:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.3);
 }
 
-.login-button:disabled {
+.recover-button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
-/* Ícones usando Unicode */
-.user-icon::before {
-    content: '👤';
+.back-to-login {
+    text-align: center;
 }
 
-.lock-icon::before {
-    content: '🔒';
+.back-to-login a {
+    color: #c41e3a;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.eye-icon::before {
-    content: '👁️';
-}
-
-.eye-slash-icon::before {
-    content: '🙈';
+.back-to-login a:hover {
+    color: #a01729;
+    text-decoration: underline;
 }
 
 /* Responsividade */
 @media (max-width: 480px) {
-    .login-container {
+    .recover-password-container {
         padding: 30px 25px;
         margin: 10px;
-    }
-
-    .form-options {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
     }
 
     .logo {
