@@ -94,12 +94,12 @@
             Exportar
           </button>
           
-          <a routerLink="/novo-chamado" class="btn btn-primary">
+          <button (click)="abrirModalCriarChamado()" class="btn btn-primary">
             <svg viewBox="0 0 24 24">
               <path d="M12 4v16m8-8H4"></path>
             </svg>
             Novo Chamado
-          </a>
+          </button>
         </div>
       </div>
     </header>
@@ -172,7 +172,9 @@
       <!-- Lista de Chamados -->
       <div class="chamados-grid">
         <div *ngFor="let chamado of getFilteredChamados()" 
-             class="chamado-card">
+             class="chamado-card"
+             [class.novo-chamado]="chamado.isNovo"
+             (click)="abrirChamado(chamado)">
           
           <!-- Header do Card -->
           <div class="card-header">
@@ -246,14 +248,20 @@
         <div class="empty-icon">📥</div>
         <h3>Nenhum chamado encontrado</h3>
         <p>Não há chamados para exibir com os filtros selecionados.</p>
-        <a routerLink="/novo-chamado" class="btn btn-primary">
+        <button (click)="abrirModalCriarChamado()" class="btn btn-primary">
           <svg viewBox="0 0 24 24">
             <path d="M12 4v16m8-8H4"></path>
           </svg>
           Criar primeiro chamado
-        </a>
+        </button>
       </div>
     </div>
   </main>
 </div>
 
+<!-- Modal de Criação de Chamado -->
+<app-create-ticket-modal
+  [isVisible]="showCreateModal"
+  (closeModal)="fecharModalCriarChamado()"
+  (chamadoCriado)="onChamadoCriado($event)"
+></app-create-ticket-modal>

@@ -1,0 +1,295 @@
+<!-- Modal Overlay -->
+<div 
+  class="modal-overlay" 
+  *ngIf="isVisible"
+  (click)="onOverlayClick($event)"
+  [@fadeIn]
+>
+  <!-- Modal Container -->
+  <div class="modal-container" [@slideIn]>
+    <!-- Modal Header -->
+    <div class="modal-header">
+      <h2 class="modal-title">
+        <span *ngIf="!showPreview">📝 Criar Novo Chamado</span>
+        <span *ngIf="showPreview">👁️ Preview do Chamado</span>
+      </h2>
+      <button 
+        class="close-button" 
+        (click)="closeModalHandler()"
+        aria-label="Fechar modal"
+        type="button"
+      >
+        ✕
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="modal-body">
+      
+      <!-- Formulário -->
+      <form [formGroup]="ticketForm" *ngIf="!showPreview" class="ticket-form">
+        
+        <!-- ID do Chamado -->
+        <div class="form-group">
+          <label for="id" class="form-label required">
+            ID do Chamado
+            <span class="field-info">*</span>
+          </label>
+          <input
+            type="text"
+            id="id"
+            formControlName="id"
+            class="form-input"
+            [class.error]="hasFieldError('id')"
+            placeholder="Ex: 10242, 10243..."
+            maxlength="10"
+          >
+          <div class="field-hint">
+            <!-- TODO: Futuramente este campo será gerado automaticamente pelo back-end -->
+            <small>💡 Futuramente será gerado automaticamente</small>
+          </div>
+          <div class="error-message" *ngIf="hasFieldError('id')">
+            {{ getFieldError('id') }}
+          </div>
+        </div>
+
+        <!-- Cliente -->
+        <div class="form-group">
+          <label for="cliente" class="form-label required">
+            Cliente
+            <span class="field-info">*</span>
+          </label>
+          <select
+            id="cliente"
+            formControlName="cliente"
+            class="form-select"
+            [class.error]="hasFieldError('cliente')"
+          >
+            <option value="">Selecione o tipo de cliente</option>
+            <option 
+              *ngFor="let option of clienteOptions" 
+              [value]="option.value"
+            >
+              {{ option.label }}
+            </option>
+          </select>
+          <div class="error-message" *ngIf="hasFieldError('cliente')">
+            {{ getFieldError('cliente') }}
+          </div>
+        </div>
+
+        <!-- Assunto -->
+        <div class="form-group">
+          <label for="assunto" class="form-label required">
+            Assunto
+            <span class="field-info">*</span>
+          </label>
+          <select
+            id="assunto"
+            formControlName="assunto"
+            class="form-select"
+            [class.error]="hasFieldError('assunto')"
+          >
+            <option value="">Selecione o tipo de assunto</option>
+            <option 
+              *ngFor="let option of assuntoOptions" 
+              [value]="option.value"
+            >
+              {{ option.label }}
+            </option>
+          </select>
+          <div class="error-message" *ngIf="hasFieldError('assunto')">
+            {{ getFieldError('assunto') }}
+          </div>
+        </div>
+
+        <!-- Atendente -->
+        <div class="form-group">
+          <label for="atendente" class="form-label required">
+            Atendente
+            <span class="field-info">*</span>
+          </label>
+          <select
+            id="atendente"
+            formControlName="atendente"
+            class="form-select"
+            [class.error]="hasFieldError('atendente')"
+          >
+            <option value="">Selecione a atendente</option>
+            <option 
+              *ngFor="let option of atendenteOptions" 
+              [value]="option.value"
+            >
+              {{ option.label }}
+            </option>
+          </select>
+          <div class="error-message" *ngIf="hasFieldError('atendente')">
+            {{ getFieldError('atendente') }}
+          </div>
+        </div>
+
+        <!-- Data -->
+        <div class="form-group">
+          <label for="data" class="form-label required">
+            Data
+            <span class="field-info">*</span>
+          </label>
+          <input
+            type="date"
+            id="data"
+            formControlName="data"
+            class="form-input readonly"
+            readonly
+          >
+          <div class="field-hint">
+            <small>📅 Data preenchida automaticamente</small>
+          </div>
+        </div>
+
+        <!-- Descrição -->
+        <div class="form-group">
+          <label for="descricao" class="form-label">
+            Descrição
+            <span class="field-optional">(opcional)</span>
+          </label>
+          <textarea
+            id="descricao"
+            formControlName="descricao"
+            class="form-textarea"
+            placeholder="Observações adicionais sobre o chamado..."
+            rows="4"
+            maxlength="500"
+          ></textarea>
+          <div class="field-hint">
+            <small>{{ ticketForm.get('descricao')?.value?.length || 0 }}/500 caracteres</small>
+          </div>
+        </div>
+
+      </form>
+
+      <!-- Preview do Chamado -->
+      <div *ngIf="showPreview" class="preview-container">
+        <div class="preview-card">
+          <h3 class="preview-title">Resumo do Chamado</h3>
+          
+          <div class="preview-grid">
+            <div class="preview-item">
+              <span class="preview-label">ID:</span>
+              <span class="preview-value">#{{ getPreviewData().id }}</span>
+            </div>
+            
+            <div class="preview-item">
+              <span class="preview-label">Cliente:</span>
+              <span class="preview-value">{{ getPreviewData().cliente }}</span>
+            </div>
+            
+            <div class="preview-item">
+              <span class="preview-label">Assunto:</span>
+              <span class="preview-value">{{ getPreviewData().assunto }}</span>
+            </div>
+            
+            <div class="preview-item">
+              <span class="preview-label">Atendente:</span>
+              <span class="preview-value">{{ getPreviewData().atendente }}</span>
+            </div>
+            
+            <div class="preview-item">
+              <span class="preview-label">Data:</span>
+              <span class="preview-value">{{ getPreviewData().data }}</span>
+            </div>
+            
+            <div class="preview-item full-width">
+              <span class="preview-label">Descrição:</span>
+              <span class="preview-value description">{{ getPreviewData().descricao }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="modal-footer">
+      
+      <!-- Botões do Formulário -->
+      <div *ngIf="!showPreview" class="footer-buttons">
+        <button 
+          type="button" 
+          class="btn btn-secondary" 
+          (click)="closeModalHandler()"
+        >
+          Cancelar
+        </button>
+        
+        <button 
+          type="button" 
+          class="btn btn-outline" 
+          (click)="showPreviewHandler()"
+          [disabled]="!isFormValid()"
+        >
+          👁️ Preview
+        </button>
+        
+        <button 
+          type="button" 
+          class="btn btn-primary" 
+          (click)="salvarChamado()"
+          [disabled]="!isFormValid() || isLoading"
+        >
+          <span *ngIf="!isLoading">💾 Salvar Chamado</span>
+          <span *ngIf="isLoading" class="loading-content">
+            <span class="spinner"></span>
+            Salvando...
+          </span>
+        </button>
+      </div>
+
+      <!-- Botões do Preview -->
+      <div *ngIf="showPreview" class="footer-buttons">
+        <button 
+          type="button" 
+          class="btn btn-secondary" 
+          (click)="backToForm()"
+        >
+          ← Voltar
+        </button>
+        
+        <button 
+          type="button" 
+          class="btn btn-primary" 
+          (click)="salvarChamado()"
+          [disabled]="isLoading"
+        >
+          <span *ngIf="!isLoading">💾 Confirmar e Salvar</span>
+          <span *ngIf="isLoading" class="loading-content">
+            <span class="spinner"></span>
+            Salvando...
+          </span>
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast de Feedback -->
+<div 
+  class="toast" 
+  [class]="getToastClass()"
+  *ngIf="toast.visible"
+  [@fadeIn]
+>
+  <div class="toast-content">
+    <span class="toast-icon">{{ getToastIcon() }}</span>
+    <span class="toast-message">{{ toast.message }}</span>
+    <button 
+      class="toast-close" 
+      (click)="hideToast()"
+      aria-label="Fechar notificação"
+    >
+      ✕
+    </button>
+  </div>
+</div>
+
