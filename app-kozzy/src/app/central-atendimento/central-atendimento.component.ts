@@ -1,22 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../auth.service'; // Ajuste o caminho conforme necessário
 import { CreateTicketModalComponent } from '../create-ticket-modal/create-ticket-modal.component'; // Ajuste o caminho conforme necessário
-
-interface Chamado {
-  id: string;
-  numero: string;
-  cliente: string;
-  descricao: string;
-  status: 'aberto' | 'em-andamento' | 'fechado';
-  prioridade: 'baixa' | 'media' | 'alta';
-  dataAbertura: string;
-  tempoResposta: string;
-  categoria: string;
-  icone: string;
-  isNovo?: boolean;
-}
+import { ChamadosService, Chamado, NovoChamado } from '../chamados.service'; // Ajuste o caminho conforme necessário
 
 interface MenuItem {
   label: string;
@@ -31,17 +19,7 @@ interface StatusFilter {
   value: string;
   count: number;
   active: boolean;
-}
-
-interface NovoChamado {
-  id: string;
-  cliente: string;
-  assunto: string;
-  atendente: string;
-  data: string;
-  descricao: string;
-  status: 'aberto';
-  prioridade: 'media';
+  icon: string;
 }
 
 @Component({
@@ -51,14 +29,18 @@ interface NovoChamado {
   templateUrl: './central-atendimento.component.html',
   styleUrls: ['./central-atendimento.component.css']
 })
-export class CentralAtendimentoComponent implements OnInit {
+export class CentralAtendimentoComponent implements OnInit, OnDestroy {
   menuCollapsed = false;
   currentFilter = 'todos';
   usuarioLogado: any = null;
   showCreateModal = false;
+  isLoading = false;
+  
+  chamados: Chamado[] = [];
+  private chamadosSubscription?: Subscription;
   
   menuItems: MenuItem[] = [
-    { label: 'Chamados', route: '/central', icon: '📞', active: true, badge: 12 },
+    { label: 'Chamados', route: '/central', icon: '📞', active: true, badge: 0 },
     { label: 'Novo Atendimento', route: '/novo-atendimento', icon: '➕' },
     { label: 'Buscar Cliente', route: '/buscar-cliente', icon: '🔍' },
     { label: 'Relatórios', route: '/relatorios', icon: '📊' },
@@ -66,114 +48,16 @@ export class CentralAtendimentoComponent implements OnInit {
   ];
 
   statusFilters: StatusFilter[] = [
-    { label: 'Todos', value: 'todos', count: 12, active: true },
-    { label: 'Abertos', value: 'aberto', count: 5, active: false },
-    { label: 'Em Andamento', value: 'em-andamento', count: 4, active: false },
-    { label: 'Fechados', value: 'fechado', count: 3, active: false }
-  ];
-
-  chamados: Chamado[] = [
-    {
-      id: '1',
-      numero: '#10234',
-      cliente: 'João da Silva',
-      descricao: 'Problema de conexão com a internet, cliente relatando lentidão',
-      status: 'em-andamento',
-      prioridade: 'alta',
-      dataAbertura: '2024-01-15',
-      tempoResposta: '2h 30min',
-      categoria: 'Técnico',
-      icone: '🔧'
-    },
-    {
-      id: '2',
-      numero: '#10235',
-      cliente: 'Maria Oliveira',
-      descricao: 'Cobrança indevida na fatura do mês anterior',
-      status: 'aberto',
-      prioridade: 'media',
-      dataAbertura: '2024-01-15',
-      tempoResposta: '45min',
-      categoria: 'Financeiro',
-      icone: '💰'
-    },
-    {
-      id: '3',
-      numero: '#10236',
-      cliente: 'Carlos Santos',
-      descricao: 'Solicitação de cancelamento do serviço',
-      status: 'em-andamento',
-      prioridade: 'baixa',
-      dataAbertura: '2024-01-14',
-      tempoResposta: '1h 15min',
-      categoria: 'Comercial',
-      icone: '📞'
-    },
-    {
-      id: '4',
-      numero: '#10237',
-      cliente: 'Ana Costa',
-      descricao: 'Dúvida sobre faturamento e planos disponíveis',
-      status: 'aberto',
-      prioridade: 'baixa',
-      dataAbertura: '2024-01-14',
-      tempoResposta: '30min',
-      categoria: 'Suporte',
-      icone: '❓'
-    },
-    {
-      id: '5',
-      numero: '#10238',
-      cliente: 'Pedro Almeida',
-      descricao: 'Instalação de novo equipamento',
-      status: 'fechado',
-      prioridade: 'media',
-      dataAbertura: '2024-01-13',
-      tempoResposta: '3h 20min',
-      categoria: 'Técnico',
-      icone: '🔧'
-    },
-    {
-      id: '6',
-      numero: '#10239',
-      cliente: 'Lucia Ferreira',
-      descricao: 'Troca de plano de internet',
-      status: 'fechado',
-      prioridade: 'baixa',
-      dataAbertura: '2024-01-12',
-      tempoResposta: '1h 45min',
-      categoria: 'Comercial',
-      icone: '📞'
-    },
-    {
-      id: '7',
-      numero: '#10240',
-      cliente: 'Roberto Silva',
-      descricao: 'Problema com roteador Wi-Fi',
-      status: 'aberto',
-      prioridade: 'alta',
-      dataAbertura: '2024-01-16',
-      tempoResposta: '1h 10min',
-      categoria: 'Técnico',
-      icone: '🔧'
-    },
-    {
-      id: '8',
-      numero: '#10241',
-      cliente: 'Fernanda Costa',
-      descricao: 'Solicitação de segunda via de boleto',
-      status: 'em-andamento',
-      prioridade: 'baixa',
-      dataAbertura: '2024-01-16',
-      tempoResposta: '25min',
-      categoria: 'Financeiro',
-      icone: '💰'
-    }
+    { label: 'Todos', value: 'todos', count: 0, active: true, icon: '📋' },
+    { label: 'Abertos', value: 'aberto', count: 0, active: false, icon: '🔴' },
+    { label: 'Em Andamento', value: 'em-andamento', count: 0, active: false, icon: '🟡' },
+    { label: 'Fechados', value: 'fechado', count: 0, active: false, icon: '🟢' }
   ];
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private chamadosService: ChamadosService
   ) {}
 
   ngOnInit() {
@@ -186,8 +70,22 @@ export class CentralAtendimentoComponent implements OnInit {
     // Obter dados do usuário logado
     this.usuarioLogado = this.authService.getUsuarioLogado();
     
-    // Atualizar contadores dos filtros
-    this.updateFilterCounts();
+    // Subscrever aos chamados do serviço
+    this.chamadosSubscription = this.chamadosService.getChamados().subscribe(
+      chamados => {
+        this.chamados = chamados;
+        this.updateFilterCounts();
+        this.updateMenuBadge();
+        console.log('📊 Chamados atualizados:', chamados.length);
+      }
+    );
+  }
+
+  ngOnDestroy() {
+    // Limpar subscription para evitar memory leaks
+    if (this.chamadosSubscription) {
+      this.chamadosSubscription.unsubscribe();
+    }
   }
 
   // Método de logout
@@ -210,68 +108,29 @@ export class CentralAtendimentoComponent implements OnInit {
 
   // Processar novo chamado criado
   onChamadoCriado(novoChamado: NovoChamado): void {
-    // Converter o novo chamado para o formato interno
-    const chamadoInterno: Chamado = {
-      id: (this.chamados.length + 1).toString(),
-      numero: `#${novoChamado.id}`,
-      cliente: novoChamado.cliente,
-      descricao: novoChamado.descricao || 'Sem descrição adicional',
-      status: 'aberto',
-      prioridade: 'media',
-      dataAbertura: novoChamado.data,
-      tempoResposta: '0min',
-      categoria: this.mapAssuntoToCategoria(novoChamado.assunto),
-      icone: this.getIconeByCategoria(this.mapAssuntoToCategoria(novoChamado.assunto)),
-      isNovo: true
-    };
+    this.isLoading = true;
 
-    // Adicionar o novo chamado ao início da lista
-    this.chamados.unshift(chamadoInterno);
+    try {
+      // Usar o serviço para adicionar o chamado
+      const chamadoAdicionado = this.chamadosService.adicionarChamado(novoChamado);
+      
+      // Fechar modal
+      this.fecharModalCriarChamado();
 
-    // Atualizar contadores dos filtros
-    this.updateFilterCounts();
+      console.log(`✅ Chamado #${novoChamado.numeroProtocolo} criado e persistido com sucesso!`);
 
-    // Fechar modal
-    this.fecharModalCriarChamado();
-
-    // Remover o destaque "novo" após 5 segundos
-    setTimeout(() => {
-      const chamado = this.chamados.find(c => c.id === chamadoInterno.id);
-      if (chamado) {
-        chamado.isNovo = false;
-      }
-    }, 5000);
-  }
-
-  // Mapear assunto para categoria
-  mapAssuntoToCategoria(assunto: string): string {
-    switch (assunto.toLowerCase()) {
-      case 'tecnico':
-        return 'Técnico';
-      case 'suporte':
-        return 'Suporte';
-      case 'comercial':
-        return 'Comercial';
-      case 'financeiro':
-        return 'Financeiro';
-      default:
-        return 'Geral';
+    } catch (error) {
+      console.error('❌ Erro ao processar novo chamado:', error);
+    } finally {
+      this.isLoading = false;
     }
   }
 
-  // Obter ícone por categoria
-  getIconeByCategoria(categoria: string): string {
-    switch (categoria) {
-      case 'Técnico':
-        return '🔧';
-      case 'Suporte':
-        return '❓';
-      case 'Comercial':
-        return '📞';
-      case 'Financeiro':
-        return '💰';
-      default:
-        return '📋';
+  // Atualizar badge do menu
+  updateMenuBadge(): void {
+    const chamadosItem = this.menuItems.find(item => item.label === 'Chamados');
+    if (chamadosItem) {
+      chamadosItem.badge = this.chamados.length;
     }
   }
 
@@ -306,26 +165,28 @@ export class CentralAtendimentoComponent implements OnInit {
   getStatusClass(status: string): string {
     switch (status) {
       case 'aberto':
-        return 'bg-red-100 text-red-800 border border-red-200';
+        return 'status-aberto';
       case 'em-andamento':
-        return 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+        return 'status-andamento';
       case 'fechado':
-        return 'bg-green-100 text-green-800 border border-green-200';
+        return 'status-fechado';
       default:
-        return 'bg-gray-100 text-gray-800 border border-gray-200';
+        return 'status-default';
     }
   }
 
   getPrioridadeClass(prioridade: string): string {
     switch (prioridade) {
+      case 'urgente':
+        return 'prioridade-urgente';
       case 'alta':
-        return 'bg-red-500';
+        return 'prioridade-alta';
       case 'media':
-        return 'bg-yellow-500';
+        return 'prioridade-media';
       case 'baixa':
-        return 'bg-green-500';
+        return 'prioridade-baixa';
       default:
-        return 'bg-gray-500';
+        return 'prioridade-media';
     }
   }
 
@@ -334,7 +195,7 @@ export class CentralAtendimentoComponent implements OnInit {
       case 'aberto':
         return 'Aberto';
       case 'em-andamento':
-        return 'Em andamento';
+        return 'Em Andamento';
       case 'fechado':
         return 'Fechado';
       default:
@@ -344,6 +205,8 @@ export class CentralAtendimentoComponent implements OnInit {
 
   getPrioridadeLabel(prioridade: string): string {
     switch (prioridade) {
+      case 'urgente':
+        return 'Urgente';
       case 'alta':
         return 'Alta';
       case 'media':
@@ -355,9 +218,51 @@ export class CentralAtendimentoComponent implements OnInit {
     }
   }
 
+  getPrioridadeIcon(prioridade: string): string {
+    switch (prioridade) {
+      case 'urgente':
+        return '🔴';
+      case 'alta':
+        return '🟠';
+      case 'media':
+        return '🟡';
+      case 'baixa':
+        return '🟢';
+      default:
+        return '⚪';
+    }
+  }
+
   formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR');
+  }
+
+  formatDateTime(dateString: string, timeString: string): string {
+    const date = new Date(dateString + 'T' + timeString);
+    return date.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  // Calcular tempo decorrido desde a abertura
+  getTempoDecorrido(dataAbertura: string, horaAbertura: string): string {
+    const agora = new Date();
+    const abertura = new Date(dataAbertura + 'T' + horaAbertura);
+    const diffMs = agora.getTime() - abertura.getTime();
+    
+    const diffHoras = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMinutos = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (diffHoras > 0) {
+      return `${diffHoras}h ${diffMinutos}min`;
+    } else {
+      return `${diffMinutos}min`;
+    }
   }
 
   // Abrir detalhes do chamado
@@ -366,4 +271,41 @@ export class CentralAtendimentoComponent implements OnInit {
     // Implementar navegação para detalhes do chamado
     // this.router.navigate(['/chamado', chamado.id]);
   }
+
+  // Exportar dados usando o serviço
+  exportarDados(): void {
+    try {
+      const dadosJson = this.chamadosService.exportarDados();
+      const blob = new Blob([dadosJson], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `chamados_${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+      console.log('📁 Dados exportados com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao exportar dados:', error);
+    }
+  }
+
+  // Atualizar status do chamado usando o serviço
+  atualizarStatus(chamado: Chamado, novoStatus: 'aberto' | 'em-andamento' | 'fechado'): void {
+    this.chamadosService.atualizarStatus(chamado.id, novoStatus);
+  }
+
+  // Buscar chamados usando o serviço
+  buscarChamados(termo: string): void {
+    if (termo.trim()) {
+      const resultados = this.chamadosService.buscarChamados(termo);
+      console.log(`🔍 Encontrados ${resultados.length} chamados para "${termo}"`);
+      // Implementar exibição dos resultados da busca
+    }
+  }
+
+  // Limpar todos os dados (função administrativa)
+  limparTodosDados(): void {
+    this.chamadosService.limparTodosDados();
+  }
 }
+

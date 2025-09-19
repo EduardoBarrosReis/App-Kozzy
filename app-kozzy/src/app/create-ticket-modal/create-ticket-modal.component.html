@@ -29,34 +29,33 @@
       <!-- Formulário -->
       <form [formGroup]="ticketForm" *ngIf="!showPreview" class="ticket-form">
         
-        <!-- ID do Chamado -->
+        <!-- Nº do Protocolo -->
         <div class="form-group">
-          <label for="id" class="form-label required">
-            ID do Chamado
+          <label for="numeroProtocolo" class="form-label required">
+            Nº do Protocolo
             <span class="field-info">*</span>
           </label>
           <input
             type="text"
-            id="id"
-            formControlName="id"
+            id="numeroProtocolo"
+            formControlName="numeroProtocolo"
             class="form-input"
-            [class.error]="hasFieldError('id')"
+            [class.error]="hasFieldError('numeroProtocolo')"
             placeholder="Ex: 10242, 10243..."
             maxlength="10"
           >
           <div class="field-hint">
-            <!-- TODO: Futuramente este campo será gerado automaticamente pelo back-end -->
-            <small>💡 Futuramente será gerado automaticamente</small>
+            <small>💡 Futuramente será gerado automaticamente pelo sistema</small>
           </div>
-          <div class="error-message" *ngIf="hasFieldError('id')">
-            {{ getFieldError('id') }}
+          <div class="error-message" *ngIf="hasFieldError('numeroProtocolo')">
+            {{ getFieldError('numeroProtocolo') }}
           </div>
         </div>
 
         <!-- Cliente -->
         <div class="form-group">
           <label for="cliente" class="form-label required">
-            Cliente
+            Tipo de Cliente
             <span class="field-info">*</span>
           </label>
           <select
@@ -81,7 +80,7 @@
         <!-- Assunto -->
         <div class="form-group">
           <label for="assunto" class="form-label required">
-            Assunto
+            Categoria do Assunto
             <span class="field-info">*</span>
           </label>
           <select
@@ -90,7 +89,7 @@
             class="form-select"
             [class.error]="hasFieldError('assunto')"
           >
-            <option value="">Selecione o tipo de assunto</option>
+            <option value="">Selecione a categoria do assunto</option>
             <option 
               *ngFor="let option of assuntoOptions" 
               [value]="option.value"
@@ -106,7 +105,7 @@
         <!-- Atendente -->
         <div class="form-group">
           <label for="atendente" class="form-label required">
-            Atendente
+            Atendente Responsável
             <span class="field-info">*</span>
           </label>
           <select
@@ -115,7 +114,7 @@
             class="form-select"
             [class.error]="hasFieldError('atendente')"
           >
-            <option value="">Selecione a atendente</option>
+            <option value="">Selecione o atendente responsável</option>
             <option 
               *ngFor="let option of atendenteOptions" 
               [value]="option.value"
@@ -128,35 +127,77 @@
           </div>
         </div>
 
-        <!-- Data -->
+        <!-- Data e Hora -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="data" class="form-label required">
+              Data do Atendimento
+              <span class="field-info">*</span>
+            </label>
+            <input
+              type="date"
+              id="data"
+              formControlName="data"
+              class="form-input readonly"
+              readonly
+            >
+            <div class="field-hint">
+              <small>📅 Data preenchida automaticamente</small>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="hora" class="form-label required">
+              Horário
+              <span class="field-info">*</span>
+            </label>
+            <input
+              type="time"
+              id="hora"
+              formControlName="hora"
+              class="form-input readonly"
+              readonly
+            >
+            <div class="field-hint">
+              <small>🕐 Horário preenchido automaticamente</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Prioridade -->
         <div class="form-group">
-          <label for="data" class="form-label required">
-            Data
-            <span class="field-info">*</span>
+          <label for="prioridade" class="form-label">
+            Nível de Prioridade
+            <span class="field-optional">(opcional)</span>
           </label>
-          <input
-            type="date"
-            id="data"
-            formControlName="data"
-            class="form-input readonly"
-            readonly
+          <select
+            id="prioridade"
+            formControlName="prioridade"
+            class="form-select"
           >
+            <option 
+              *ngFor="let option of prioridadeOptions" 
+              [value]="option.value"
+            >
+              {{ option.label }}
+            </option>
+          </select>
           <div class="field-hint">
-            <small>📅 Data preenchida automaticamente</small>
+            <small>⚡ Padrão: Média prioridade</small>
           </div>
         </div>
 
         <!-- Descrição -->
         <div class="form-group">
           <label for="descricao" class="form-label">
-            Descrição
+            Descrição Detalhada
             <span class="field-optional">(opcional)</span>
           </label>
           <textarea
             id="descricao"
             formControlName="descricao"
             class="form-textarea"
-            placeholder="Observações adicionais sobre o chamado..."
+            placeholder="Descreva detalhadamente o problema ou solicitação do cliente..."
             rows="4"
             maxlength="500"
           ></textarea>
@@ -170,21 +211,21 @@
       <!-- Preview do Chamado -->
       <div *ngIf="showPreview" class="preview-container">
         <div class="preview-card">
-          <h3 class="preview-title">Resumo do Chamado</h3>
+          <h3 class="preview-title">📋 Resumo do Chamado</h3>
           
           <div class="preview-grid">
             <div class="preview-item">
-              <span class="preview-label">ID:</span>
-              <span class="preview-value">#{{ getPreviewData().id }}</span>
+              <span class="preview-label">Nº do Protocolo:</span>
+              <span class="preview-value protocol-number">#{{ getPreviewData().numeroProtocolo }}</span>
             </div>
             
             <div class="preview-item">
-              <span class="preview-label">Cliente:</span>
+              <span class="preview-label">Tipo de Cliente:</span>
               <span class="preview-value">{{ getPreviewData().cliente }}</span>
             </div>
             
             <div class="preview-item">
-              <span class="preview-label">Assunto:</span>
+              <span class="preview-label">Categoria:</span>
               <span class="preview-value">{{ getPreviewData().assunto }}</span>
             </div>
             
@@ -194,11 +235,18 @@
             </div>
             
             <div class="preview-item">
-              <span class="preview-label">Data:</span>
-              <span class="preview-value">{{ getPreviewData().data }}</span>
+              <span class="preview-label">Data/Hora:</span>
+              <span class="preview-value">{{ getPreviewData().dataHora }}</span>
             </div>
             
-            <div class="preview-item full-width">
+            <div class="preview-item">
+              <span class="preview-label">Prioridade:</span>
+              <span class="preview-value priority" [class]="getPriorityClass()">
+                {{ getPreviewData().prioridade }}
+              </span>
+            </div>
+            
+            <div class="preview-item full-width" *ngIf="getPreviewData().descricao">
               <span class="preview-label">Descrição:</span>
               <span class="preview-value description">{{ getPreviewData().descricao }}</span>
             </div>
@@ -218,7 +266,7 @@
           class="btn btn-secondary" 
           (click)="closeModalHandler()"
         >
-          Cancelar
+          ❌ Cancelar
         </button>
         
         <button 
@@ -227,7 +275,7 @@
           (click)="showPreviewHandler()"
           [disabled]="!isFormValid()"
         >
-          👁️ Preview
+          👁️ Visualizar
         </button>
         
         <button 
@@ -236,10 +284,10 @@
           (click)="salvarChamado()"
           [disabled]="!isFormValid() || isLoading"
         >
-          <span *ngIf="!isLoading">💾 Salvar Chamado</span>
+          <span *ngIf="!isLoading">💾 Criar Chamado</span>
           <span *ngIf="isLoading" class="loading-content">
             <span class="spinner"></span>
-            Salvando...
+            Criando...
           </span>
         </button>
       </div>
@@ -251,7 +299,7 @@
           class="btn btn-secondary" 
           (click)="backToForm()"
         >
-          ← Voltar
+          ← Editar
         </button>
         
         <button 
@@ -260,10 +308,10 @@
           (click)="salvarChamado()"
           [disabled]="isLoading"
         >
-          <span *ngIf="!isLoading">💾 Confirmar e Salvar</span>
+          <span *ngIf="!isLoading">✅ Confirmar e Criar</span>
           <span *ngIf="isLoading" class="loading-content">
             <span class="spinner"></span>
-            Salvando...
+            Criando...
           </span>
         </button>
       </div>

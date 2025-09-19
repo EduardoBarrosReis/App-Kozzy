@@ -1,16 +1,20 @@
 import { Component, EventEmitter, Input, Output, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { trigger, transition, style, animate } from '@angular/animations';
+import { ChamadosService } from '../chamados.service'; // Ajuste o caminho conforme necessário
 
 interface NovoChamado {
-  id: string;
+  numeroProtocolo: string;
   cliente: string;
   assunto: string;
   atendente: string;
   data: string;
+  hora: string;
+  prioridade: string;
   descricao: string;
   status: 'aberto';
-  prioridade: 'media';
+  dataHoraCriacao: string;
 }
 
 interface ToastMessage {
@@ -19,12 +23,35 @@ interface ToastMessage {
   visible: boolean;
 }
 
+interface SelectOption {
+  value: string;
+  label: string;
+  icon?: string;
+}
+
 @Component({
   selector: 'app-create-ticket-modal',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './create-ticket-modal.component.html',
-  styleUrls: ['./create-ticket-modal.component.css']
+  styleUrls: ['./create-ticket-modal.component.css'],
+  animations: [
+    trigger('fadeIn', [
+      transition(':enter', [
+        style({ opacity: 0 }),
+        animate('200ms ease-out', style({ opacity: 1 }))
+      ]),
+      transition(':leave', [
+        animate('150ms ease-in', style({ opacity: 0 }))
+      ])
+    ]),
+    trigger('slideIn', [
+      transition(':enter', [
+        style({ transform: 'translateY(-30px)', opacity: 0 }),
+        animate('250ms ease-out', style({ transform: 'translateY(0)', opacity: 1 }))
+      ])
+    ])
+  ]
 })
 export class CreateTicketModalComponent implements OnInit {
   @Input() isVisible: boolean = false;
@@ -43,51 +70,72 @@ export class CreateTicketModalComponent implements OnInit {
   };
 
   // Opções para os selects
-  clienteOptions = [
-    { value: 'entregador', label: 'Entregador' },
-    { value: 'cliente', label: 'Cliente' }
+  clienteOptions: SelectOption[] = [
+    { value: 'entregador', label: '🚴 Entregador', icon: '🚴' },
+    { value: 'cliente', label: '👤 Cliente Final', icon: '👤' },
+    { value: 'loja', label: '🏪 Loja/Estabelecimento', icon: '🏪' }
   ];
 
-  assuntoOptions = [
-    { value: 'tecnico', label: 'Técnico' },
-    { value: 'suporte', label: 'Suporte' },
-    { value: 'comercial', label: 'Comercial' },
-    { value: 'financeiro', label: 'Financeiro' }
+  assuntoOptions: SelectOption[] = [
+    { value: 'tecnico', label: '🔧 Suporte Técnico', icon: '🔧' },
+    { value: 'entrega', label: '📦 Problemas de Entrega', icon: '📦' },
+    { value: 'pagamento', label: '💳 Questões de Pagamento', icon: '💳' },
+    { value: 'cadastro', label: '📝 Cadastro/Dados', icon: '📝' },
+    { value: 'comercial', label: '💼 Comercial/Vendas', icon: '💼' },
+    { value: 'financeiro', label: '💰 Financeiro', icon: '💰' },
+    { value: 'outros', label: '❓ Outros Assuntos', icon: '❓' }
   ];
 
-  atendenteOptions = [
-    { value: 'mariana', label: 'Mariana' },
-    { value: 'fernanda', label: 'Fernanda' },
-    { value: 'carla', label: 'Carla' }
+  atendenteOptions: SelectOption[] = [
+    { value: 'mariana', label: '👩‍💼 Mariana Silva', icon: '👩‍💼' },
+    { value: 'fernanda', label: '👩‍💼 Fernanda Costa', icon: '👩‍💼' },
+    { value: 'carla', label: '👩‍💼 Carla Santos', icon: '👩‍💼' },
+    { value: 'rafael', label: '👨‍💼 Rafael Oliveira', icon: '👨‍💼' }
   ];
 
-  // Lista de IDs existentes para validação (simulado)
-  existingIds: string[] = ['10234', '10235', '10236', '10237', '10238', '10239', '10240', '10241'];
+  prioridadeOptions: SelectOption[] = [
+    { value: 'baixa', label: '🟢 Baixa Prioridade', icon: '🟢' },
+    { value: 'media', label: '🟡 Média Prioridade', icon: '🟡' },
+    { value: 'alta', label: '🟠 Alta Prioridade', icon: '🟠' },
+    { value: 'urgente', label: '🔴 Urgente', icon: '🔴' }
+  ];
 
-  constructor(private fb: FormBuilder) {}
+  constructor(
+    private fb: FormBuilder,
+    private chamadosService: ChamadosService
+  ) {}
 
   ngOnInit() {
     this.initializeForm();
   }
 
   initializeForm() {
-    const today = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+    const now = new Date();
+    const today = now.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+    const currentTime = now.toTimeString().slice(0, 5); // Formato HH:MM
 
     this.ticketForm = this.fb.group({
-      id: ['', [Validators.required, Validators.minLength(3), this.idValidator.bind(this)]],
+      numeroProtocolo: ['', [
+        Validators.required, 
+        Validators.minLength(3),
+        Validators.pattern(/^[0-9]+$/), // Apenas números
+        this.protocolValidator.bind(this)
+      ]],
       cliente: ['', Validators.required],
       assunto: ['', Validators.required],
       atendente: ['', Validators.required],
       data: [{ value: today, disabled: true }, Validators.required],
-      descricao: [''] // Campo opcional
+      hora: [{ value: currentTime, disabled: true }, Validators.required],
+      prioridade: ['media'], // Valor padrão
+      descricao: ['', Validators.maxLength(500)] // Campo opcional com limite
     });
   }
 
-  // Validador customizado para verificar se o ID já existe
-  idValidator(control: any) {
+  // Validador customizado para verificar se o protocolo já existe usando o serviço
+  protocolValidator(control: any) {
     const value = control.value;
-    if (value && this.existingIds.includes(value)) {
-      return { idExists: true };
+    if (value && this.chamadosService.protocoloExiste(value)) {
+      return { protocolExists: true };
     }
     return null;
   }
@@ -123,7 +171,7 @@ export class CreateTicketModalComponent implements OnInit {
 
   // Verificar se o formulário é válido
   isFormValid(): boolean {
-    const requiredFields = ['id', 'cliente', 'assunto', 'atendente'];
+    const requiredFields = ['numeroProtocolo', 'cliente', 'assunto', 'atendente'];
     return requiredFields.every(field => 
       this.ticketForm.get(field)?.valid && this.ticketForm.get(field)?.value
     );
@@ -135,7 +183,15 @@ export class CreateTicketModalComponent implements OnInit {
       this.showPreview = true;
     } else {
       this.showToast('Preencha todos os campos obrigatórios antes de visualizar', 'warning');
+      this.markAllFieldsAsTouched();
     }
+  }
+
+  // Marcar todos os campos como tocados para mostrar erros
+  markAllFieldsAsTouched() {
+    Object.keys(this.ticketForm.controls).forEach(key => {
+      this.ticketForm.get(key)?.markAsTouched();
+    });
   }
 
   // Voltar do preview para o formulário
@@ -147,6 +203,7 @@ export class CreateTicketModalComponent implements OnInit {
   async salvarChamado() {
     if (!this.isFormValid()) {
       this.showToast('Preencha todos os campos obrigatórios', 'error');
+      this.markAllFieldsAsTouched();
       return;
     }
 
@@ -154,56 +211,59 @@ export class CreateTicketModalComponent implements OnInit {
 
     try {
       // Simular delay de processamento
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       const formValue = this.ticketForm.getRawValue(); // getRawValue() inclui campos disabled
       
       const novoChamado: NovoChamado = {
-        id: formValue.id,
+        numeroProtocolo: formValue.numeroProtocolo,
         cliente: this.getClienteLabel(formValue.cliente),
         assunto: this.getAssuntoLabel(formValue.assunto),
         atendente: this.getAtendenteLabel(formValue.atendente),
         data: formValue.data,
+        hora: formValue.hora,
+        prioridade: this.getPrioridadeLabel(formValue.prioridade),
         descricao: formValue.descricao || '',
         status: 'aberto',
-        prioridade: 'media'
+        dataHoraCriacao: new Date().toISOString()
       };
-
-      // Adicionar o ID à lista de existentes para evitar duplicatas
-      this.existingIds.push(formValue.id);
 
       // Emitir evento para o componente pai
       this.chamadoCriado.emit(novoChamado);
 
-      this.showToast('Chamado criado com sucesso!', 'success');
+      this.showToast(`Chamado #${formValue.numeroProtocolo} criado com sucesso!`, 'success');
 
-      // Fechar modal após 1.5 segundos
+      // Fechar modal após 2 segundos
       setTimeout(() => {
         this.closeModalHandler();
-      }, 1500);
+      }, 2000);
 
     } catch (error) {
-      this.showToast('Falha ao salvar chamado. Tente novamente.', 'error');
+      console.error('Erro ao salvar chamado:', error);
+      this.showToast('Falha ao criar chamado. Tente novamente.', 'error');
     } finally {
       this.isLoading = false;
     }
   }
 
-  // Obter label do cliente
+  // Métodos para obter labels das opções
   getClienteLabel(value: string): string {
     const option = this.clienteOptions.find(opt => opt.value === value);
     return option ? option.label : value;
   }
 
-  // Obter label do assunto
   getAssuntoLabel(value: string): string {
     const option = this.assuntoOptions.find(opt => opt.value === value);
     return option ? option.label : value;
   }
 
-  // Obter label do atendente
   getAtendenteLabel(value: string): string {
     const option = this.atendenteOptions.find(opt => opt.value === value);
+    return option ? option.label : value;
+  }
+
+  getPrioridadeLabel(value: string): string {
+    const option = this.prioridadeOptions.find(opt => opt.value === value);
     return option ? option.label : value;
   }
 
@@ -211,22 +271,41 @@ export class CreateTicketModalComponent implements OnInit {
   getPreviewData() {
     const formValue = this.ticketForm.getRawValue();
     return {
-      id: formValue.id,
+      numeroProtocolo: formValue.numeroProtocolo,
       cliente: this.getClienteLabel(formValue.cliente),
       assunto: this.getAssuntoLabel(formValue.assunto),
       atendente: this.getAtendenteLabel(formValue.atendente),
-      data: this.formatDate(formValue.data),
+      dataHora: this.formatDateTime(formValue.data, formValue.hora),
+      prioridade: this.getPrioridadeLabel(formValue.prioridade),
       descricao: formValue.descricao || 'Nenhuma descrição fornecida'
     };
   }
 
-  // Formatar data para exibição
-  formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
+  // Formatar data e hora para exibição
+  formatDateTime(dateString: string, timeString: string): string {
+    const date = new Date(dateString + 'T' + timeString);
+    return date.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 
-  // Mostrar toast
+  // Obter classe CSS para prioridade
+  getPriorityClass(): string {
+    const prioridade = this.ticketForm.get('prioridade')?.value;
+    switch (prioridade) {
+      case 'baixa': return 'priority-low';
+      case 'media': return 'priority-medium';
+      case 'alta': return 'priority-high';
+      case 'urgente': return 'priority-urgent';
+      default: return 'priority-medium';
+    }
+  }
+
+  // Métodos para Toast
   showToast(message: string, type: 'success' | 'error' | 'warning' | 'info') {
     this.toast = {
       message,
@@ -234,57 +313,37 @@ export class CreateTicketModalComponent implements OnInit {
       visible: true
     };
 
-    // Auto-hide após 3 segundos para success, 5 segundos para error
-    const hideDelay = type === 'success' ? 3000 : 5000;
+    // Auto-hide baseado no tipo
+    const hideDelay = type === 'success' ? 3000 : type === 'error' ? 5000 : 4000;
     setTimeout(() => {
       this.hideToast();
     }, hideDelay);
   }
 
-  // Esconder toast
   hideToast() {
     this.toast.visible = false;
   }
 
-  // Obter classe CSS para o toast
   getToastClass(): string {
-    switch (this.toast.type) {
-      case 'success':
-        return 'toast-success';
-      case 'error':
-        return 'toast-error';
-      case 'warning':
-        return 'toast-warning';
-      case 'info':
-        return 'toast-info';
-      default:
-        return 'toast-info';
-    }
+    return `toast-${this.toast.type}`;
   }
 
-  // Obter ícone do toast
   getToastIcon(): string {
     switch (this.toast.type) {
-      case 'success':
-        return '✅';
-      case 'error':
-        return '❌';
-      case 'warning':
-        return '⚠️';
-      case 'info':
-        return 'ℹ️';
-      default:
-        return 'ℹ️';
+      case 'success': return '✅';
+      case 'error': return '❌';
+      case 'warning': return '⚠️';
+      case 'info': return 'ℹ️';
+      default: return 'ℹ️';
     }
   }
 
-  // Verificar se um campo específico tem erro
+  // Métodos para validação de campos
   hasFieldError(fieldName: string): boolean {
     const field = this.ticketForm.get(fieldName);
     return !!(field && field.invalid && field.touched);
   }
 
-  // Obter mensagem de erro para um campo
   getFieldError(fieldName: string): string {
     const field = this.ticketForm.get(fieldName);
     
@@ -293,10 +352,16 @@ export class CreateTicketModalComponent implements OnInit {
         return 'Este campo é obrigatório';
       }
       if (field.errors['minlength']) {
-        return 'ID deve ter pelo menos 3 caracteres';
+        return 'Protocolo deve ter pelo menos 3 caracteres';
       }
-      if (field.errors['idExists']) {
-        return 'Este ID já existe. Use um ID diferente.';
+      if (field.errors['pattern']) {
+        return 'Protocolo deve conter apenas números';
+      }
+      if (field.errors['protocolExists']) {
+        return 'Este número de protocolo já existe. Use um número diferente.';
+      }
+      if (field.errors['maxlength']) {
+        return `Máximo de ${field.errors['maxlength'].requiredLength} caracteres`;
       }
     }
     

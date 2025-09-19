@@ -54,7 +54,7 @@
     <div class="user-section">
       <div class="user-info" [class.hidden]="menuCollapsed" *ngIf="usuarioLogado">
         <div class="user-avatar">
-          <span>{{ usuarioLogado.nome.charAt(0).toUpperCase() }}</span>
+          <span>{{ usuarioLogado.nome?.charAt(0)?.toUpperCase() }}</span>
         </div>
         <div class="user-details">
           <p class="user-name">{{ usuarioLogado.nome }}</p>
@@ -87,7 +87,7 @@
         </div>
         
         <div class="header-actions">
-          <button class="btn btn-secondary">
+          <button (click)="exportarDados()" class="btn btn-secondary">
             <svg viewBox="0 0 24 24">
               <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
@@ -107,50 +107,14 @@
     <div class="content">
       <!-- Stats Cards -->
       <div class="stats-grid">
-        <div class="stat-card">
+        <div class="stat-card" *ngFor="let filter of statusFilters">
           <div class="stat-content">
-            <div class="stat-icon stat-icon-blue">
-              <span>📊</span>
+            <div class="stat-icon" [class]="'stat-icon-' + filter.value">
+              <span>{{ filter.icon }}</span>
             </div>
             <div class="stat-info">
-              <p class="stat-label">Total</p>
-              <p class="stat-value">{{ chamados.length }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon stat-icon-red">
-              <span>🔴</span>
-            </div>
-            <div class="stat-info">
-              <p class="stat-label">Abertos</p>
-              <p class="stat-value stat-value-red">{{ statusFilters[1].count }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon stat-icon-yellow">
-              <span>🟡</span>
-            </div>
-            <div class="stat-info">
-              <p class="stat-label">Em Andamento</p>
-              <p class="stat-value stat-value-yellow">{{ statusFilters[2].count }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-icon stat-icon-green">
-              <span>✅</span>
-            </div>
-            <div class="stat-info">
-              <p class="stat-label">Fechados</p>
-              <p class="stat-value stat-value-green">{{ statusFilters[3].count }}</p>
+              <p class="stat-label">{{ filter.label }}</p>
+              <p class="stat-value" [class]="'stat-value-' + filter.value">{{ filter.count }}</p>
             </div>
           </div>
         </div>
@@ -184,7 +148,7 @@
               </div>
               <div class="card-info">
                 <div class="card-number-priority">
-                  <span class="card-number">{{ chamado.numero }}</span>
+                  <span class="card-number">#{{ chamado.numeroProtocolo }}</span>
                   <div class="priority-indicator" [class]="'priority-' + chamado.prioridade"></div>
                 </div>
                 <h3 class="card-title">{{ chamado.cliente }}</h3>
@@ -210,9 +174,13 @@
                 <p class="detail-value">{{ chamado.categoria }}</p>
               </div>
               <div class="detail-item">
+                <p class="detail-label">Atendente</p>
+                <p class="detail-value">{{ chamado.atendente }}</p>
+              </div>
+              <div class="detail-item">
                 <p class="detail-label">Prioridade</p>
                 <div class="priority-info">
-                  <div class="priority-dot" [class]="'priority-' + chamado.prioridade"></div>
+                  <span class="priority-icon">{{ getPrioridadeIcon(chamado.prioridade) }}</span>
                   <span>{{ getPrioridadeLabel(chamado.prioridade) }}</span>
                 </div>
               </div>
@@ -225,13 +193,13 @@
                   <svg viewBox="0 0 24 24">
                     <path d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4h3a2 2 0 012 2v1a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h2z"></path>
                   </svg>
-                  <span>{{ formatDate(chamado.dataAbertura) }}</span>
+                  <span>{{ formatDateTime(chamado.dataAbertura, chamado.horaAbertura) }}</span>
                 </div>
                 <div class="meta-item">
                   <svg viewBox="0 0 24 24">
                     <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
-                  <span>{{ chamado.tempoResposta }}</span>
+                  <span>{{ getTempoDecorrido(chamado.dataAbertura, chamado.horaAbertura) }}</span>
                 </div>
               </div>
               
@@ -249,10 +217,10 @@
         <h3>Nenhum chamado encontrado</h3>
         <p>Não há chamados para exibir com os filtros selecionados.</p>
         <button (click)="abrirModalCriarChamado()" class="btn btn-primary">
-          <svg viewBox="0 0 24 24">
-            <path d="M12 4v16m8-8H4"></path>
-          </svg>
-          Criar primeiro chamado
+            <svg viewBox="0 0 24 24">
+              <path d="M12 4v16m8-8H4"></path>
+            </svg>
+            Criar primeiro chamado
         </button>
       </div>
     </div>
