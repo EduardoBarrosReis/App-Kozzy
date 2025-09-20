@@ -1,0 +1,161 @@
+/* Container do Relatório */
+.relatorio-container {
+  padding: 20px;
+  background-color: #f9fafb;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Tabela Responsiva */
+.table-responsive {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.relatorio-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.relatorio-table th,
+.relatorio-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.relatorio-table th {
+  background-color: #fef2f2; /* Fundo vermelho claro */
+  color: #dc2626; /* Texto vermelho */
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+.relatorio-table tbody tr:hover {
+  background-color: #fefafa;
+}
+
+.relatorio-table td {
+  color: #374151;
+  font-size: 14px;
+}
+
+/* Badges de Status */
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-aberto {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+.status-andamento {
+  background-color: #fffbeb;
+  color: #f59e0b;
+}
+
+.status-fechado {
+  background-color: #d1fae5;
+  color: #10b981;
+}
+
+/* Badges de Prioridade */
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.priority-urgent {
+  background-color: #fecaca;
+  color: #dc2626;
+}
+
+.priority-alta {
+  background-color: #fed7aa;
+  color: #c2410c;
+}
+
+.priority-media {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.priority-baixa {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 50px 20px;
+  color: #6b7280;
+  font-size: 16px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.empty-state .empty-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.empty-state h3 {
+  font-size: 24px;
+  color: #1f2937;
+  margin-bottom: 10px;
+}
+
+.empty-state p {
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .relatorio-table th,
+  .relatorio-table td {
+    padding: 10px;
+  }
+
+  .relatorio-table th {
+    font-size: 10px;
+  }
+
+  .relatorio-table td {
+    font-size: 12px;
+  }
+
+  .status-badge,
+  .priority-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .empty-state h3 {
+    font-size: 20px;
+  }
+
+  .empty-state p {
+    font-size: 14px;
+  }
+}
+
+

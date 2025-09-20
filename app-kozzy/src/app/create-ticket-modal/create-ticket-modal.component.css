@@ -76,7 +76,7 @@
   justify-content: space-between;
   padding: 24px 32px;
   border-bottom: 1px solid #e2e8f0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
 }
 
@@ -147,7 +147,7 @@
 }
 
 .form-label.required {
-  color: #1f2937;
+  color: #dc2626;
 }
 
 .field-info {
@@ -177,8 +177,8 @@
 .form-select:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
 .form-input.error,
@@ -287,8 +287,8 @@
 .preview-value.protocol-number {
   font-size: 16px;
   font-weight: 700;
-  color: #667eea;
-  background: #f0f4ff;
+  color: #dc2626;
+  background: #fef2f2;
   padding: 4px 8px;
   border-radius: 6px;
   display: inline-block;
@@ -370,14 +370,14 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
 }
 
 .btn-secondary {
@@ -393,12 +393,12 @@
 
 .btn-outline {
   background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
+  color: #dc2626;
+  border: 2px solid #dc2626;
 }
 
 .btn-outline:hover:not(:disabled) {
-  background: #667eea;
+  background: #dc2626;
   color: white;
   transform: translateY(-1px);
 }
@@ -470,7 +470,7 @@
 
 /* Toast Types */
 .toast-success {
-  border-left: 4px solid #10b981;
+  border-left: 4px solid #dc2626;
 }
 
 .toast-error {
@@ -482,7 +482,7 @@
 }
 
 .toast-info {
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid #dc2626;
 }
 
 /* Responsividade */
@@ -499,6 +499,7 @@
   .modal-header {
     padding: 20px 24px;
   }
+}
 
   .modal-title {
     font-size: 18px;
@@ -512,83 +513,7 @@
     padding: 20px 24px;
   }
 
-  .footer-buttons {
-    flex-direction: column;
-  }
-
-  .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .preview-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
   .form-row {
     grid-template-columns: 1fr;
-    gap: 16px;
   }
-
-  .toast {
-    top: 16px;
-    right: 16px;
-    left: 16px;
-    max-width: none;
-  }
-}
-
-@media (max-width: 480px) {
-  .modal-header {
-    padding: 16px 20px;
-  }
-
-  .modal-body {
-    padding: 20px;
-  }
-
-  .modal-footer {
-    padding: 16px 20px;
-  }
-
-  .form-input,
-  .form-select,
-  .form-textarea {
-    padding: 10px 12px;
-    font-size: 16px; /* Evita zoom no iOS */
-  }
-
-  .btn {
-    padding: 14px 20px;
-    font-size: 16px;
-  }
-
-  .ticket-form {
-    gap: 20px;
-  }
-}
-
-/* Melhorias de acessibilidade */
-.form-input:focus-visible,
-.form-select:focus-visible,
-.form-textarea:focus-visible,
-.btn:focus-visible {
-  outline: 2px solid #667eea;
-  outline-offset: 2px;
-}
-
-/* Estados de hover melhorados */
-.form-select:hover:not(:disabled) {
-  border-color: #9ca3af;
-}
-
-.form-input:hover:not(:disabled):not(.readonly) {
-  border-color: #9ca3af;
-}
-
-/* Transições suaves */
-* {
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-}
-
+ 

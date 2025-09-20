@@ -377,18 +377,54 @@ export class ChamadosService {
     }
   }
 
-  // Buscar chamados
-  buscarChamados(termo: string): Chamado[] {
+  // Buscar chamados por cliente
+  buscarChamadosPorCliente(termoCliente: string): Chamado[] {
     const chamados = this.getChamadosSync();
-    const termoBusca = termo.toLowerCase();
-    
-    return chamados.filter(chamado => 
-      chamado.numeroProtocolo.toLowerCase().includes(termoBusca) ||
-      chamado.cliente.toLowerCase().includes(termoBusca) ||
-      chamado.descricao.toLowerCase().includes(termoBusca) ||
-      chamado.categoria.toLowerCase().includes(termoBusca) ||
-      chamado.atendente.toLowerCase().includes(termoBusca)
+    const termoBusca = termoCliente.toLowerCase();
+    return chamados.filter(chamado =>
+      chamado.cliente.toLowerCase().includes(termoBusca)
     );
   }
-}
 
+  // Buscar chamados por filtros de relatório
+  buscarChamadosPorFiltros(filtros: any): Chamado[] {
+    const chamados = this.getChamadosSync();
+    let resultado = [...chamados];
+
+    // Filtrar por período (obrigatório)
+    if (filtros.dataInicio && filtros.dataFim) {
+      resultado = resultado.filter(chamado => {
+        const dataAbertura = new Date(chamado.dataAbertura);
+        const dataInicio = new Date(filtros.dataInicio);
+        const dataFim = new Date(filtros.dataFim);
+        return dataAbertura >= dataInicio && dataAbertura <= dataFim;
+      });
+    }
+
+    // Filtrar por status (opcional)
+    if (filtros.status && filtros.status !== '') {
+      resultado = resultado.filter(chamado => chamado.status === filtros.status);
+    }
+
+    // Filtrar por prioridade (opcional)
+    if (filtros.prioridade && filtros.prioridade !== '') {
+      resultado = resultado.filter(chamado => chamado.prioridade === filtros.prioridade);
+    }
+
+    // Filtrar por atendente (opcional)
+    if (filtros.atendente && filtros.atendente !== '') {
+      resultado = resultado.filter(chamado => 
+        chamado.atendente.toLowerCase().includes(filtros.atendente.toLowerCase())
+      );
+    }
+
+    // Filtrar por cliente (opcional)
+    if (filtros.cliente && filtros.cliente !== '') {
+      resultado = resultado.filter(chamado => 
+        chamado.cliente.toLowerCase().includes(filtros.cliente.toLowerCase())
+      );
+    }
+
+    return resultado;
+  }
+}

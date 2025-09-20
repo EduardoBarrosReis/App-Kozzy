@@ -1,0 +1,43 @@
+<div class="relatorio-container">
+  <div *ngIf="chamados.length === 0" class="empty-state">
+    <div class="empty-icon">🤷‍♀️</div>
+    <h3>Nenhum chamado encontrado para os filtros selecionados.</h3>
+    <p>Tente ajustar os critérios de busca ou crie novos chamados.</p>
+  </div>
+
+  <div *ngIf="chamados.length > 0" class="table-responsive">
+    <table class="relatorio-table">
+      <thead>
+        <tr>
+          <th>Nº Protocolo</th>
+          <th>Cliente</th>
+          <th>Status</th>
+          <th>Data</th>
+          <th>Prioridade</th>
+          <th>Atendente</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let chamado of chamados">
+          <td>#{{ chamado.numeroProtocolo }}</td>
+          <td>{{ chamado.cliente }}</td>
+          <td>
+            <span class="status-badge" [class]="getStatusClass(chamado.status)">
+              {{ getStatusLabel(chamado.status) }}
+            </span>
+          </td>
+          <td>{{ formatDateTime(chamado.dataAbertura, chamado.horaAbertura) }}</td>
+          <td>
+            <span class="priority-badge" [class]="getPrioridadeClass(chamado.prioridade)">
+              {{ getPrioridadeIcon(chamado.prioridade) }} {{ getPrioridadeLabel(chamado.prioridade) }}
+            </span>
+          </td>
+          <td>{{ chamado.atendente }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+

@@ -33,19 +33,29 @@
     <nav class="navigation">
       <ul class="menu-list">
         <li *ngFor="let item of menuItems">
-          <a [routerLink]="item.route" 
-             class="menu-item"
-             [class.active]="item.active">
-            
-            <span class="menu-icon">{{ item.icon }}</span>
-            
-            <span class="menu-label" [class.hidden]="menuCollapsed">{{ item.label }}</span>
-
-            <!-- Badge -->
-            <span *ngIf="item.badge && !menuCollapsed" class="menu-badge">
-              {{ item.badge }}
-            </span>
-          </a>
+          <ng-container *ngIf="item.action">
+            <button (click)="item.action()" 
+                    class="menu-item"
+                    [class.active]="item.active">
+              <span class="menu-icon">{{ item.icon }}</span>
+              <span class="menu-label" [class.hidden]="menuCollapsed">{{ item.label }}</span>
+              <span *ngIf="item.badge && !menuCollapsed" class="menu-badge">
+                {{ item.badge }}
+              </span>
+            </button>
+          </ng-container>
+          <ng-container *ngIf="item.route">
+            <a [routerLink]="item.route" 
+               class="menu-item"
+               [class.active]="item.active">
+              <span class="menu-icon">{{ item.icon }}</span>
+              <span class="menu-label" [class.hidden]="menuCollapsed">{{ item.label }}</span>
+              <!-- Badge -->
+              <span *ngIf="item.badge && !menuCollapsed" class="menu-badge">
+                {{ item.badge }}
+              </span>
+            </a>
+          </ng-container>
         </li>
       </ul>
     </nav>
@@ -233,3 +243,24 @@
   (closeModal)="fecharModalCriarChamado()"
   (chamadoCriado)="onChamadoCriado($event)"
 ></app-create-ticket-modal>
+
+<!-- Modal de Busca de Cliente -->
+<app-buscar-cliente
+  [isVisible]="showBuscarClienteModal"
+  (closeModal)="fecharModalBuscarCliente()"
+></app-buscar-cliente>
+
+<!-- Modal de Filtros de Relatório -->
+<app-relatorio-filtro-modal
+  [isVisible]="showRelatorioFiltrosModal"
+  (closeModal)="fecharModalRelatorioFiltros()"
+  (gerarRelatorioEvent)="onGerarRelatorio($event)"
+></app-relatorio-filtro-modal>
+
+<!-- Componente de Tabela de Relatório -->
+<app-relatorio-tabela
+  *ngIf="showRelatorioTabela"
+  [chamados]="relatorioChamados"
+  (closeReport)="fecharRelatorioTabela()"
+></app-relatorio-tabela>
+

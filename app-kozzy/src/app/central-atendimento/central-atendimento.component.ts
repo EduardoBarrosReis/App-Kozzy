@@ -4,11 +4,15 @@ import { RouterModule, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../auth.service'; // Ajuste o caminho conforme necessário
 import { CreateTicketModalComponent } from '../create-ticket-modal/create-ticket-modal.component'; // Ajuste o caminho conforme necessário
+import { BuscarClienteComponent } from '../buscar-cliente/buscar-cliente.component'; // NOVO: Importar o modal de busca
+import { RelatorioFiltroModalComponent, RelatorioFilters } from '../relatorio-filtro-modal/relatorio-filtro-modal.component'; // NOVO: Importar o modal de filtros de relatório
+import { RelatorioTabelaComponent } from '../relatorio-tabela/relatorio-tabela.component'; // NOVO: Importar o componente de tabela de relatório
 import { ChamadosService, Chamado, NovoChamado } from '../chamados.service'; // Ajuste o caminho conforme necessário
 
 interface MenuItem {
   label: string;
-  route: string;
+  route?: string; // Tornar route opcional para itens que abrem modais
+  action?: () => void; // Adicionar propriedade action para funções
   icon: string;
   active?: boolean;
   badge?: number;
@@ -25,7 +29,7 @@ interface StatusFilter {
 @Component({
   selector: 'app-central-atendimento',
   standalone: true,
-  imports: [CommonModule, RouterModule, CreateTicketModalComponent],
+  imports: [CommonModule, RouterModule, CreateTicketModalComponent, BuscarClienteComponent, RelatorioFiltroModalComponent, RelatorioTabelaComponent], // NOVO: Adicionar RelatorioTabelaComponent
   templateUrl: './central-atendimento.component.html',
   styleUrls: ['./central-atendimento.component.css']
 })
@@ -34,6 +38,10 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
   currentFilter = 'todos';
   usuarioLogado: any = null;
   showCreateModal = false;
+  showBuscarClienteModal = false; // NOVO: Variável para controlar a visibilidade do modal de busca
+  showRelatorioFiltrosModal = false; // NOVO: Variável para controlar a visibilidade do modal de filtros de relatório
+  showRelatorioTabela = false; // NOVO: Variável para controlar a visibilidade da tabela de relatório
+  relatorioChamados: Chamado[] = []; // NOVO: Dados para a tabela de relatório
   isLoading = false;
   
   chamados: Chamado[] = [];
@@ -41,9 +49,9 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
   
   menuItems: MenuItem[] = [
     { label: 'Chamados', route: '/central', icon: '📞', active: true, badge: 0 },
-    { label: 'Novo Atendimento', route: '/novo-atendimento', icon: '➕' },
-    { label: 'Buscar Cliente', route: '/buscar-cliente', icon: '🔍' },
-    { label: 'Relatórios', route: '/relatorios', icon: '📊' },
+    { label: 'Novo Atendimento', icon: '➕', action: () => this.abrirModalCriarChamado() }, // Modificado para usar action
+    { label: 'Buscar Cliente', icon: '🔍', action: () => this.abrirModalBuscarCliente() }, // NOVO: Item para abrir o modal de busca
+    { label: 'Relatórios', icon: '📊', action: () => this.abrirModalRelatorioFiltros() },
     { label: 'Configurações', route: '/configuracoes', icon: '⚙️' }
   ];
 
@@ -104,6 +112,40 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
   // Fechar modal de criação de chamado
   fecharModalCriarChamado(): void {
     this.showCreateModal = false;
+  }
+
+  // NOVO: Abrir modal de busca de cliente
+  abrirModalBuscarCliente(): void {
+    this.showBuscarClienteModal = true;
+  }
+
+  // NOVO: Fechar modal de busca de cliente
+  fecharModalBuscarCliente(): void {
+    this.showBuscarClienteModal = false;
+  }
+
+  // NOVO: Abrir modal de filtros de relatório
+  abrirModalRelatorioFiltros(): void {
+    this.showRelatorioFiltrosModal = true;
+  }
+
+  // NOVO: Fechar modal de filtros de relatório
+  fecharModalRelatorioFiltros(): void {
+    this.showRelatorioFiltrosModal = false;
+  }
+
+  // NOVO: Processar filtros do relatório
+  onGerarRelatorio(filtros: RelatorioFilters): void {
+    console.log("Gerar relatório com filtros:", filtros);
+    this.relatorioChamados = this.chamadosService.buscarChamadosPorFiltros(filtros);
+    this.showRelatorioTabela = true;
+    this.fecharModalRelatorioFiltros();
+  }
+
+  // NOVO: Fechar tabela de relatório
+  fecharRelatorioTabela(): void {
+    this.showRelatorioTabela = false;
+    this.relatorioChamados = [];
   }
 
   // Processar novo chamado criado
@@ -297,7 +339,7 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
   // Buscar chamados usando o serviço
   buscarChamados(termo: string): void {
     if (termo.trim()) {
-      const resultados = this.chamadosService.buscarChamados(termo);
+      const resultados = this.chamadosService.buscarChamadosPorCliente(termo);
       console.log(`🔍 Encontrados ${resultados.length} chamados para "${termo}"`);
       // Implementar exibição dos resultados da busca
     }
@@ -308,4 +350,3 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
     this.chamadosService.limparTodosDados();
   }
 }
-
