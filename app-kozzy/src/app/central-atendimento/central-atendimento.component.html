@@ -74,8 +74,8 @@
       
       <!-- Botão de Logout -->
       <button (click)="logout()" class="logout-btn" [class.collapsed]="menuCollapsed" title="Sair do sistema">
-        <svg viewBox="0 0 24 24" class="logout-icon">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+        <svg viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 012-2h4"></path>
           <polyline points="16,17 21,12 16,7"></polyline>
           <line x1="21" y1="12" x2="9" y2="12"></line>
         </svg>
@@ -86,181 +86,182 @@
 
   <!-- Área Principal -->
   <main class="main-content">
-    <!-- Header -->
-    <header class="header">
-      <div class="header-content">
-        <div class="header-left">
-          <div class="header-title">
-            <h1>Central de Atendimento</h1>
-            <p>Gerencie todos os chamados e solicitações</p>
-          </div>
-        </div>
-        
-        <div class="header-actions">
-          <button (click)="exportarDados()" class="btn btn-secondary">
-            <svg viewBox="0 0 24 24">
-              <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            Exportar
-          </button>
-          
-          <button (click)="abrirModalCriarChamado()" class="btn btn-primary">
-            <svg viewBox="0 0 24 24">
-              <path d="M12 4v16m8-8H4"></path>
-            </svg>
-            Novo Chamado
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <div class="content">
-      <!-- Stats Cards -->
-      <div class="stats-grid">
-        <div class="stat-card" *ngFor="let filter of statusFilters">
-          <div class="stat-content">
-            <div class="stat-icon" [class]="'stat-icon-' + filter.value">
-              <span>{{ filter.icon }}</span>
-            </div>
-            <div class="stat-info">
-              <p class="stat-label">{{ filter.label }}</p>
-              <p class="stat-value" [class]="'stat-value-' + filter.value">{{ filter.count }}</p>
+    <!-- Conteúdo principal da Central de Atendimento (visível se não estiver na tela de relatório) -->
+    <ng-container *ngIf="!showRelatorioScreen">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-content">
+          <div class="header-left">
+            <div class="header-title">
+              <h1>Central de Atendimento</h1>
+              <p>Gerencie todos os chamados e solicitações</p>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Filtros -->
-      <div class="filters-section">
-        <h3 class="filters-title">Filtros</h3>
-        <div class="filters-list">
-          <button *ngFor="let filter of statusFilters"
-                  (click)="setFilter(filter.value)"
-                  [class]="filter.active ? 'filter-btn active' : 'filter-btn'">
-            {{ filter.label }}
-            <span class="filter-count">{{ filter.count }}</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Lista de Chamados -->
-      <div class="chamados-grid">
-        <div *ngFor="let chamado of getFilteredChamados()" 
-             class="chamado-card"
-             [class.novo-chamado]="chamado.isNovo"
-             (click)="abrirChamado(chamado)">
           
-          <!-- Header do Card -->
-          <div class="card-header">
-            <div class="card-header-left">
-              <div class="card-icon">
-                <span>{{ chamado.icone }}</span>
-              </div>
-              <div class="card-info">
-                <div class="card-number-priority">
-                  <span class="card-number">#{{ chamado.numeroProtocolo }}</span>
-                  <div class="priority-indicator" [class]="'priority-' + chamado.prioridade"></div>
-                </div>
-                <h3 class="card-title">{{ chamado.cliente }}</h3>
-              </div>
-            </div>
+          <div class="header-actions">
+            <button (click)="exportarDados()" class="btn btn-secondary">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              Exportar
+            </button>
             
-            <span class="status-badge" [class]="'status-' + chamado.status">
-              {{ getStatusLabel(chamado.status) }}
-            </span>
+            <button (click)="abrirModalCriarChamado()" class="btn btn-primary">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 4v16m8-8H4"></path>
+              </svg>
+              Novo Chamado
+            </button>
           </div>
+        </div>
+      </header>
 
-          <!-- Conteúdo do Card -->
-          <div class="card-content">
-            <!-- Descrição -->
-            <div class="card-description">
-              <p>{{ chamado.descricao }}</p>
-            </div>
-
-            <!-- Informações Adicionais -->
-            <div class="card-details">
-              <div class="detail-item">
-                <p class="detail-label">Categoria</p>
-                <p class="detail-value">{{ chamado.categoria }}</p>
+      <div class="content">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card" *ngFor="let filter of statusFilters">
+            <div class="stat-content">
+              <div class="stat-icon" [class]="'stat-icon-' + filter.value">
+                <span>{{ filter.icon }}</span>
               </div>
-              <div class="detail-item">
-                <p class="detail-label">Atendente</p>
-                <p class="detail-value">{{ chamado.atendente }}</p>
-              </div>
-              <div class="detail-item">
-                <p class="detail-label">Prioridade</p>
-                <div class="priority-info">
-                  <span class="priority-icon">{{ getPrioridadeIcon(chamado.prioridade) }}</span>
-                  <span>{{ getPrioridadeLabel(chamado.prioridade) }}</span>
-                </div>
+              <div class="stat-info">
+                <p class="stat-label">{{ filter.label }}</p>
+                <p class="stat-value" [class]="'stat-value-' + filter.value">{{ filter.count }}</p>
               </div>
             </div>
+          </div>
+        </div>
 
-            <!-- Footer do Card -->
-            <div class="card-footer">
-              <div class="card-meta">
-                <div class="meta-item">
-                  <svg viewBox="0 0 24 24">
-                    <path d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4h3a2 2 0 012 2v1a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h2z"></path>
-                  </svg>
-                  <span>{{ formatDateTime(chamado.dataAbertura, chamado.horaAbertura) }}</span>
+        <!-- Filtros -->
+        <div class="filters-section">
+          <h3 class="filters-title">Filtros</h3>
+          <div class="filters-list">
+            <button *ngFor="let filter of statusFilters"
+                    (click)="setFilter(filter.value)"
+                    [class]="filter.active ? 'filter-btn active' : 'filter-btn'">
+              {{ filter.label }}
+              <span class="filter-count">{{ filter.count }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Lista de Chamados -->
+        <div class="chamados-grid">
+          <div *ngFor="let chamado of getFilteredChamados()" 
+               class="chamado-card"
+               [class.novo-chamado]="chamado.isNovo"
+               (click)="abrirChamado(chamado)">
+            
+            <!-- Header do Card -->
+            <div class="card-header">
+              <div class="card-header-left">
+                <div class="card-icon">
+                  <span>{{ chamado.icone }}</span>
                 </div>
-                <div class="meta-item">
-                  <svg viewBox="0 0 24 24">
-                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                  <span>{{ getTempoDecorrido(chamado.dataAbertura, chamado.horaAbertura) }}</span>
+                <div class="card-info">
+                  <div class="card-number-priority">
+                    <span class="card-number">#{{ chamado.numeroProtocolo }}</span>
+                    <div class="priority-indicator" [class]="'priority-' + chamado.prioridade"></div>
+                  </div>
+                  <h3 class="card-title">{{ chamado.cliente }}</h3>
                 </div>
               </div>
               
-              <button class="details-btn">
-                Ver detalhes →
-              </button>
+              <span class="status-badge" [class]="'status-' + chamado.status">
+                {{ getStatusLabel(chamado.status) }}
+              </span>
+            </div>
+
+            <!-- Conteúdo do Card -->
+            <div class="card-content">
+              <!-- Descrição -->
+              <div class="card-description">
+                <p>{{ chamado.descricao }}</p>
+              </div>
+
+              <!-- Informações Adicionais -->
+              <div class="card-details">
+                <div class="detail-item">
+                  <p class="detail-label">Categoria</p>
+                  <p class="detail-value">{{ chamado.categoria }}</p>
+                </div>
+                <div class="detail-item">
+                  <p class="detail-label">Atendente</p>
+                  <p class="detail-value">{{ chamado.atendente }}</p>
+                </div>
+                <div class="detail-item">
+                  <p class="detail-label">Prioridade</p>
+                  <div class="priority-info">
+                    <span class="priority-icon">{{ getPrioridadeIcon(chamado.prioridade) }}</span>
+                    <span>{{ getPrioridadeLabel(chamado.prioridade) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer do Card -->
+              <div class="card-footer">
+                <div class="card-meta">
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4h3a2 2 0 012 2v1a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2h2z"></path>
+                    </svg>
+                    <span>{{ formatDateTime(chamado.dataAbertura, chamado.horaAbertura) }}</span>
+                  </div>
+                  <div class="meta-item">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>{{ getTempoDecorrido(chamado.dataAbertura, chamado.horaAbertura) }}</span>
+                  </div>
+                </div>
+                
+                <button class="details-btn">
+                  Ver detalhes →
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Mensagem quando não há chamados -->
-      <div *ngIf="getFilteredChamados().length === 0" class="empty-state">
-        <div class="empty-icon">📥</div>
-        <h3>Nenhum chamado encontrado</h3>
-        <p>Não há chamados para exibir com os filtros selecionados.</p>
-        <button (click)="abrirModalCriarChamado()" class="btn btn-primary">
-            <svg viewBox="0 0 24 24">
-              <path d="M12 4v16m8-8H4"></path>
-            </svg>
-            Criar primeiro chamado
-        </button>
+        <!-- Mensagem quando não há chamados -->
+        <div *ngIf="getFilteredChamados().length === 0" class="empty-state">
+          <div class="empty-icon">📥</div>
+          <h3>Nenhum chamado encontrado</h3>
+          <p>Não há chamados para exibir com os filtros selecionados.</p>
+          <button (click)="abrirModalCriarChamado()" class="btn btn-primary">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 4v16m8-8H4"></path>
+              </svg>
+              Criar primeiro chamado
+          </button>
+        </div>
       </div>
-    </div>
+    </ng-container>
+
+    <!-- Tela de Relatório (visível se showRelatorioScreen for true) -->
+    <app-relatorio-screen
+      *ngIf="showRelatorioScreen"
+      [chamados]="relatorioChamados"
+      (openFilterModal)="abrirModalRelatorioFiltros()"
+      (closeReportScreen)="fecharRelatorioScreen()"
+    ></app-relatorio-screen>
   </main>
 </div>
 
-<!-- Modal de Criação de Chamado -->
+<!-- Modais -->
 <app-create-ticket-modal
   [isVisible]="showCreateModal"
   (closeModal)="fecharModalCriarChamado()"
   (chamadoCriado)="onChamadoCriado($event)"
 ></app-create-ticket-modal>
 
-<!-- Modal de Busca de Cliente -->
 <app-buscar-cliente
   [isVisible]="showBuscarClienteModal"
   (closeModal)="fecharModalBuscarCliente()"
 ></app-buscar-cliente>
 
-<!-- Modal de Filtros de Relatório -->
 <app-relatorio-filtro-modal
   [isVisible]="showRelatorioFiltrosModal"
   (closeModal)="fecharModalRelatorioFiltros()"
   (gerarRelatorioEvent)="onGerarRelatorio($event)"
 ></app-relatorio-filtro-modal>
-
-<!-- Componente de Tabela de Relatório -->
-<app-relatorio-tabela
-  *ngIf="showRelatorioTabela"
-  [chamados]="relatorioChamados"
-  (closeReport)="fecharRelatorioTabela()"
-></app-relatorio-tabela>
-

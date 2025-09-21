@@ -1,0 +1,83 @@
+.relatorio-screen-container {
+  padding: 20px;
+  background-color: var(--background-color);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
+  min-height: calc(100vh - 100px); /* Ajuste conforme o header */
+  display: flex;
+  flex-direction: column;
+}
+
+.relatorio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.relatorio-title {
+  font-size: 1.8rem;
+  color: var(--text-color-dark);
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+  border: 1px solid var(--primary-color);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-color-dark);
+  border-color: var(--primary-color-dark);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+}
+
+.btn-secondary:hover {
+  background-color: var(--primary-color-light);
+  color: white;
+}
+
+/* Variáveis de cor (definidas no CSS global ou em um arquivo de tema) */
+:root {
+  --primary-color: #dc3545; /* Vermelho */
+  --primary-color-dark: #c82333; /* Vermelho mais escuro */
+  --primary-color-light: #f8d7da; /* Vermelho mais claro */
+  --background-color: #ffffff;
+  --text-color-dark: #343a40;
+  --border-color: #e9ecef;
+  --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}

@@ -1,0 +1,21 @@
+<div class="relatorio-screen-container">
+  <div class="relatorio-header">
+    <h2 class="relatorio-title">Relatório de Chamados</h2>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="openFilterModal.emit()">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01.293.707l3.414 3.414a1 1 0 010 1.414l-3.414 3.414a1 1 0 01-.293.707V20a1 1 0 01-1 1H4a1 1 0 01-1-1v-2.586a1 1 0 01-.293-.707l-3.414-3.414a1 1 0 010-1.414l3.414-3.414A1 1 0 013 6.586V4zm2 2v.586l3.414 3.414a1 1 0 010 1.414l-3.414 3.414V18h14v-2.586l-3.414-3.414a1 1 0 010-1.414l3.414-3.414V6H5z"></path>
+        </svg>
+        Filtrar Relatório
+      </button>
+      <button class="btn btn-primary" (click)="closeReportScreen.emit()">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+        Voltar
+      </button>
+    </div>
+  </div>
+
+  <app-relatorio-tabela [chamados]="chamados"></app-relatorio-tabela>
+</div>

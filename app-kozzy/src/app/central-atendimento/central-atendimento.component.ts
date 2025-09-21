@@ -7,6 +7,7 @@ import { CreateTicketModalComponent } from '../create-ticket-modal/create-ticket
 import { BuscarClienteComponent } from '../buscar-cliente/buscar-cliente.component'; // NOVO: Importar o modal de busca
 import { RelatorioFiltroModalComponent, RelatorioFilters } from '../relatorio-filtro-modal/relatorio-filtro-modal.component'; // NOVO: Importar o modal de filtros de relatório
 import { RelatorioTabelaComponent } from '../relatorio-tabela/relatorio-tabela.component'; // NOVO: Importar o componente de tabela de relatório
+import { RelatorioScreenComponent } from '../relatorio-screen/relatorio-screen.component'; // NOVO: Importar o componente de tela de relatório
 import { ChamadosService, Chamado, NovoChamado } from '../chamados.service'; // Ajuste o caminho conforme necessário
 
 interface MenuItem {
@@ -29,7 +30,7 @@ interface StatusFilter {
 @Component({
   selector: 'app-central-atendimento',
   standalone: true,
-  imports: [CommonModule, RouterModule, CreateTicketModalComponent, BuscarClienteComponent, RelatorioFiltroModalComponent, RelatorioTabelaComponent], // NOVO: Adicionar RelatorioTabelaComponent
+  imports: [CommonModule, RouterModule, CreateTicketModalComponent, BuscarClienteComponent, RelatorioFiltroModalComponent, RelatorioTabelaComponent, RelatorioScreenComponent], // NOVO: Adicionar RelatorioScreenComponent
   templateUrl: './central-atendimento.component.html',
   styleUrls: ['./central-atendimento.component.css']
 })
@@ -39,9 +40,9 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
   usuarioLogado: any = null;
   showCreateModal = false;
   showBuscarClienteModal = false; // NOVO: Variável para controlar a visibilidade do modal de busca
-  showRelatorioFiltrosModal = false; // NOVO: Variável para controlar a visibilidade do modal de filtros de relatório
-  showRelatorioTabela = false; // NOVO: Variável para controlar a visibilidade da tabela de relatório
-  relatorioChamados: Chamado[] = []; // NOVO: Dados para a tabela de relatório
+  showRelatorioFiltrosModal = false; // Variável para controlar a visibilidade do modal de filtros de relatório
+  showRelatorioScreen = false; // NOVO: Variável para controlar a visibilidade da tela de relatório
+  relatorioChamados: Chamado[] = []; // Dados para a tabela de relatório
   isLoading = false;
   
   chamados: Chamado[] = [];
@@ -50,8 +51,8 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
   menuItems: MenuItem[] = [
     { label: 'Chamados', route: '/central', icon: '📞', active: true, badge: 0 },
     { label: 'Novo Atendimento', icon: '➕', action: () => this.abrirModalCriarChamado() }, // Modificado para usar action
-    { label: 'Buscar Cliente', icon: '🔍', action: () => this.abrirModalBuscarCliente() }, // NOVO: Item para abrir o modal de busca
-    { label: 'Relatórios', icon: '📊', action: () => this.abrirModalRelatorioFiltros() },
+    { label: 'Buscar Cliente', icon: '🔍', action: () => this.abrirModalBuscarCliente() }, // Item para abrir o modal de busca
+    { label: 'Relatórios', icon: '📊', action: () => this.abrirTelaRelatorios() }, // Modificado para abrir a tela de relatórios
     { label: 'Configurações', route: '/configuracoes', icon: '⚙️' }
   ];
 
@@ -114,37 +115,43 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
     this.showCreateModal = false;
   }
 
-  // NOVO: Abrir modal de busca de cliente
+  // Abrir modal de busca de cliente
   abrirModalBuscarCliente(): void {
     this.showBuscarClienteModal = true;
   }
 
-  // NOVO: Fechar modal de busca de cliente
+  // Fechar modal de busca de cliente
   fecharModalBuscarCliente(): void {
     this.showBuscarClienteModal = false;
   }
 
-  // NOVO: Abrir modal de filtros de relatório
+  // NOVO: Abrir a tela de relatórios (que contém o botão para abrir o modal de filtros)
+  abrirTelaRelatorios(): void {
+    this.showRelatorioScreen = true;
+    this.showRelatorioFiltrosModal = true; // Abre o modal de filtros automaticamente ao entrar na tela de relatórios
+  }
+
+  // Abrir modal de filtros de relatório
   abrirModalRelatorioFiltros(): void {
     this.showRelatorioFiltrosModal = true;
   }
 
-  // NOVO: Fechar modal de filtros de relatório
+  // Fechar modal de filtros de relatório
   fecharModalRelatorioFiltros(): void {
     this.showRelatorioFiltrosModal = false;
   }
 
-  // NOVO: Processar filtros do relatório
+  // Processar filtros do relatório
   onGerarRelatorio(filtros: RelatorioFilters): void {
     console.log("Gerar relatório com filtros:", filtros);
     this.relatorioChamados = this.chamadosService.buscarChamadosPorFiltros(filtros);
-    this.showRelatorioTabela = true;
+    this.showRelatorioScreen = true; // Garante que a tela de relatório esteja visível
     this.fecharModalRelatorioFiltros();
   }
 
-  // NOVO: Fechar tabela de relatório
-  fecharRelatorioTabela(): void {
-    this.showRelatorioTabela = false;
+  // NOVO: Fechar a tela de relatório
+  fecharRelatorioScreen(): void {
+    this.showRelatorioScreen = false;
     this.relatorioChamados = [];
   }
 
