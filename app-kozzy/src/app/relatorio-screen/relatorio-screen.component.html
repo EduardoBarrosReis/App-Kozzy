@@ -1,14 +1,23 @@
 <div class="relatorio-screen-container">
   <div class="relatorio-header">
-    <h2 class="relatorio-title">Relatório de Chamados</h2>
+    <div class="header-left">
+      <h2 class="relatorio-title">📊 Relatório de Chamados</h2>
+      <p class="relatorio-subtitle">Visualize e analise os dados dos chamados</p>
+    </div>
     <div class="header-actions">
-      <button class="btn btn-secondary" (click)="openFilterModal.emit()">
+      <button class="btn btn-filter" (click)="openFilterModal.emit()">
         <svg viewBox="0 0 24 24">
-          <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01.293.707l3.414 3.414a1 1 0 010 1.414l-3.414 3.414a1 1 0 01-.293.707V20a1 1 0 01-1 1H4a1 1 0 01-1-1v-2.586a1 1 0 01-.293-.707l-3.414-3.414a1 1 0 010-1.414l3.414-3.414A1 1 0 013 6.586V4zm2 2v.586l3.414 3.414a1 1 0 010 1.414l-3.414 3.414V18h14v-2.586l-3.414-3.414a1 1 0 010-1.414l3.414-3.414V6H5z"></path>
+          <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707L13 14v6a1 1 0 01-.553.894l-4 2A1 1 0 017 22v-8L.293 7.293A1 1 0 010 6.586V4a1 1 0 011-1z"></path>
         </svg>
         Filtrar Relatório
       </button>
-      <button class="btn btn-primary" (click)="closeReportScreen.emit()">
+      <button class="btn btn-export" (click)="exportarRelatorio()">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        Exportar
+      </button>
+      <button class="btn btn-close" (click)="closeReportScreen.emit()">
         <svg viewBox="0 0 24 24">
           <path d="M6 18L18 6M6 6l12 12"></path>
         </svg>
@@ -17,5 +26,52 @@
     </div>
   </div>
 
-  <app-relatorio-tabela [chamados]="chamados"></app-relatorio-tabela>
+  <!-- Estatísticas do Relatório -->
+  <div class="relatorio-stats" *ngIf="chamados && chamados.length > 0">
+    <div class="stat-card">
+      <div class="stat-icon total">📊</div>
+      <div class="stat-info">
+        <span class="stat-number">{{ chamados.length }}</span>
+        <span class="stat-label">Total de Chamados</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon abertos">🔴</div>
+      <div class="stat-info">
+        <span class="stat-number">{{ getStatusCount('aberto') }}</span>
+        <span class="stat-label">Abertos</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon andamento">🟡</div>
+      <div class="stat-info">
+        <span class="stat-number">{{ getStatusCount('em-andamento') }}</span>
+        <span class="stat-label">Em Andamento</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon fechados">🟢</div>
+      <div class="stat-info">
+        <span class="stat-number">{{ getStatusCount('fechado') }}</span>
+        <span class="stat-label">Fechados</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabela de Relatório -->
+  <app-relatorio-tabela *ngIf="chamados && chamados.length > 0" [chamados]="chamados"></app-relatorio-tabela>
+
+  <!-- Estado Vazio -->
+  <div *ngIf="!chamados || chamados.length === 0" class="empty-state">
+    <div class="empty-icon">🤷‍♂️</div>
+    <h3>Nenhum chamado encontrado</h3>
+    <p>Tente ajustar os critérios de busca ou crie novos chamados.</p>
+    <button class="btn btn-filter" (click)="openFilterModal.emit()">
+      <svg viewBox="0 0 24 24">
+        <path d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707L13 14v6a1 1 0 01-.553.894l-4 2A1 1 0 017 22v-8L.293 7.293A1 1 0 010 6.586V4a1 1 0 011-1z"></path>
+      </svg>
+      Ajustar Filtros
+    </button>
+  </div>
 </div>
+

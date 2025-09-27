@@ -242,7 +242,7 @@
     <app-relatorio-screen
       *ngIf="showRelatorioScreen"
       [chamados]="relatorioChamados"
-      (openFilterModal)="abrirModalRelatorioFiltros()"
+      (openFilterModal)="reabrirModalFiltros()"
       (closeReportScreen)="fecharRelatorioScreen()"
     ></app-relatorio-screen>
   </main>
@@ -255,13 +255,16 @@
   (chamadoCriado)="onChamadoCriado($event)"
 ></app-create-ticket-modal>
 
-<app-buscar-cliente
+<!-- Removido temporariamente para evitar erros de compilação -->
+<!-- <app-buscar-cliente-modal
   [isVisible]="showBuscarClienteModal"
   (closeModal)="fecharModalBuscarCliente()"
-></app-buscar-cliente>
+></app-buscar-cliente-modal> -->
 
+<!-- Modal de Filtros de Relatório - Aparece por cima de tudo quando ativo -->
 <app-relatorio-filtro-modal
   [isVisible]="showRelatorioFiltrosModal"
   (closeModal)="fecharModalRelatorioFiltros()"
   (gerarRelatorioEvent)="onGerarRelatorio($event)"
 ></app-relatorio-filtro-modal>
+

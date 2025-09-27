@@ -31,6 +31,16 @@ export interface NovoChamado {
   dataHoraCriacao: string;
 }
 
+export interface RelatorioFilters {
+  dataInicio: string;
+  dataFim: string;
+  status?: 'aberto' | 'em-andamento' | 'fechado' | '';
+  prioridade?: 'baixa' | 'media' | 'alta' | 'urgente' | '';
+  atendente?: string;
+  cliente?: string;
+}
+
+
 @Injectable({
   providedIn: 'root'
 })
@@ -427,4 +437,6 @@ export class ChamadosService {
 
     return resultado;
   }
+
+  
 }
