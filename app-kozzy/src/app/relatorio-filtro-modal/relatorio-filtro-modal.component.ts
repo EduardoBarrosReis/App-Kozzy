@@ -1,65 +1,66 @@
-import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { trigger, transition, style, animate } from '@angular/animations';
-
-export interface RelatorioFilters {
-  dataInicio: string;
-  dataFim: string;
-  status?: 'aberto' | 'em-andamento' | 'fechado';
-  prioridade?: 'baixa' | 'media' | 'alta' | 'urgente';
-  atendente?: string;
-  cliente?: string;
-}
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { RelatorioFilters } from '../chamados.service';
 
 @Component({
   selector: 'app-relatorio-filtro-modal',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './relatorio-filtro-modal.component.html',
-  styleUrls: ['./relatorio-filtro-modal.component.css'],
-  animations: [
-    trigger('fadeIn', [
-      transition(':enter', [
-        style({ opacity: 0 }),
-        animate('200ms ease-out', style({ opacity: 1 }))
-      ]),
-      transition(':leave', [
-        animate('150ms ease-in', style({ opacity: 0 }))
-      ])
-    ]),
-    trigger('slideIn', [
-      transition(':enter', [
-        style({ transform: 'translateY(-30px)', opacity: 0 }),
-        animate('250ms ease-out', style({ transform: 'translateY(0)', opacity: 1 }))
-      ])
-    ])
-  ]
+  styleUrl: './relatorio-filtro-modal.component.css'
 })
-export class RelatorioFiltroModalComponent implements OnInit {
+export class RelatorioFiltroModalComponent implements OnInit, OnChanges {
   @Input() isVisible: boolean = false;
+  @Input() filtrosSalvos: RelatorioFilters | null = null; // NOVA PROPRIEDADE PARA RECEBER FILTROS SALVOS
   @Output() closeModal = new EventEmitter<void>();
   @Output() gerarRelatorioEvent = new EventEmitter<RelatorioFilters>();
 
-  filterForm!: FormGroup;
+  filterForm: FormGroup;
 
-  constructor(private fb: FormBuilder) { }
-
-  ngOnInit(): void {
-    this.initializeForm();
-    console.log('RelatorioFiltrosModalComponent inicializado!');
-  }
-
-  initializeForm(): void {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  constructor(private fb: FormBuilder) {
     this.filterForm = this.fb.group({
-      dataInicio: [today, Validators.required],
-      dataFim: [today, Validators.required],
+      dataInicio: ['', Validators.required],
+      dataFim: ['', Validators.required],
       status: [''],
       prioridade: [''],
       atendente: [''],
       cliente: ['']
     });
+  }
+
+  ngOnInit(): void {
+    // Carregar filtros salvos se existirem
+    this.carregarFiltrosSalvos();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Quando o modal for aberto ou os filtros salvos mudarem, carregar os valores
+    if (changes['isVisible'] && this.isVisible) {
+      this.carregarFiltrosSalvos();
+    }
+    
+    if (changes['filtrosSalvos']) {
+      this.carregarFiltrosSalvos();
+    }
+  }
+
+  private carregarFiltrosSalvos(): void {
+    if (this.filtrosSalvos) {
+      // Preencher o formulário com os filtros salvos
+      this.filterForm.patchValue({
+        dataInicio: this.filtrosSalvos.dataInicio || '',
+        dataFim: this.filtrosSalvos.dataFim || '',
+        status: this.filtrosSalvos.status || '',
+        prioridade: this.filtrosSalvos.prioridade || '',
+        atendente: this.filtrosSalvos.atendente || '',
+        cliente: this.filtrosSalvos.cliente || ''
+      });
+    }
+  }
+
+  closeModalHandler(): void {
+    this.closeModal.emit();
   }
 
   onOverlayClick(event: MouseEvent): void {
@@ -68,41 +69,60 @@ export class RelatorioFiltroModalComponent implements OnInit {
     }
   }
 
-  closeModalHandler(): void {
-    this.closeModal.emit();
-    this.filterForm.reset();
-    this.initializeForm(); // Resetar para valores padrão
-  }
-
   gerarRelatorio(): void {
     if (this.filterForm.valid) {
-      this.gerarRelatorioEvent.emit(this.filterForm.value);
-      this.closeModalHandler();
+      const filtros: RelatorioFilters = {
+        dataInicio: this.filterForm.value.dataInicio,
+        dataFim: this.filterForm.value.dataFim,
+        status: this.filterForm.value.status,
+        prioridade: this.filterForm.value.prioridade,
+        atendente: this.filterForm.value.atendente,
+        cliente: this.filterForm.value.cliente
+      };
+
+      this.gerarRelatorioEvent.emit(filtros);
     } else {
-      this.markAllFieldsAsTouched();
+      // Marcar todos os campos como tocados para mostrar erros de validação
+      this.filterForm.markAllAsTouched();
     }
   }
 
-  markAllFieldsAsTouched() {
-    Object.keys(this.filterForm.controls).forEach(key => {
-      this.filterForm.get(key)?.markAsTouched();
-    });
-  }
-
+  // Métodos de validação
   hasFieldError(fieldName: string): boolean {
     const field = this.filterForm.get(fieldName);
-    return !!(field && field.invalid && field.touched);
+    return !!(field && field.invalid && (field.dirty || field.touched));
   }
 
   getFieldError(fieldName: string): string {
     const field = this.filterForm.get(fieldName);
-    if (field?.errors) {
+    if (field && field.errors) {
       if (field.errors['required']) {
-        return 'Este campo é obrigatório';
+        switch (fieldName) {
+          case 'dataInicio':
+            return 'Data de início é obrigatória';
+          case 'dataFim':
+            return 'Data de fim é obrigatória';
+          default:
+            return 'Este campo é obrigatório';
+        }
       }
     }
     return '';
   }
-}
 
+  // Método para limpar apenas os filtros opcionais (manter as datas)
+  limparFiltrosOpcionais(): void {
+    this.filterForm.patchValue({
+      status: '',
+      prioridade: '',
+      atendente: '',
+      cliente: ''
+    });
+  }
+
+  // Método para limpar todos os filtros
+  limparTodosFiltros(): void {
+    this.filterForm.reset();
+  }
+}
 

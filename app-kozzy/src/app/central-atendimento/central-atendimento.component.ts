@@ -47,6 +47,9 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
   relatorioChamados: Chamado[] = [];
   chamadosSubscription!: Subscription;
 
+  // Persistência dos filtros de relatório
+  filtrosRelatorioSalvos: RelatorioFilters | null = null;
+
   currentFilter: string = 'todos';
 
   usuarioLogado: Usuario = { nome: 'Usuário Teste', email: 'teste@kozzy.com' };
@@ -114,7 +117,7 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
     this.showBuscarClienteModal = false;
   }
 
-  // Métodos para o sistema de relatórios - CORRIGIDO
+  // Métodos para o sistema de relatórios - COM PERSISTÊNCIA DE FILTROS
   abrirModalRelatorios(): void {
     // Primeiro, garantir que a tela de relatório está fechada
     this.showRelatorioScreen = false;
@@ -129,6 +132,9 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
   }
 
   onGerarRelatorio(filtros: RelatorioFilters): void {
+    // Salvar os filtros para persistência
+    this.filtrosRelatorioSalvos = { ...filtros };
+    
     // Buscar os dados do relatório
     this.relatorioChamados = this.chamadosService.buscarChamadosPorFiltros(filtros);
     
@@ -150,6 +156,14 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
   fecharRelatorioScreen(): void {
     this.showRelatorioScreen = false;
     this.relatorioChamados = []; // Limpa os dados do relatório ao fechar a tela
+    
+    // RESETAR os filtros salvos quando sair completamente da tela de relatórios
+    this.filtrosRelatorioSalvos = null;
+  }
+
+  // Método para obter os filtros salvos (será usado pelo modal)
+  getFiltrosSalvos(): RelatorioFilters | null {
+    return this.filtrosRelatorioSalvos;
   }
 
   // Métodos para filtros e exibição de chamados

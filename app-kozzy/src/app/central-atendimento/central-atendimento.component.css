@@ -68,7 +68,7 @@
 .logo-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 8px; /* Reduzindo o espaçamento entre o ícone e o texto para um valor mínimo */
 }
 
 .logo-icon {
@@ -230,42 +230,43 @@
 }
 
 .logout-btn {
-  background-color: #f8f9fa;
-  color: #ef4444;
-  border: 1px solid #ef4444;
+  padding: 10px 20px;
   border-radius: 8px;
-  padding: 10px 15px;
-  width: 100%;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  justify-content: center;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .logout-btn:hover {
-  background-color: #ef4444;
-  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
 }
 
 .logout-btn.collapsed {
-  width: 50px;
-  padding: 10px;
-  border-radius: 50%;
+  width: auto; /* Permite que a largura se ajuste ao conteúdo */
+  padding: 10px 20px; /* Mantém o padding do botão primário */
+  border-radius: 8px; /* Mantém o border-radius padrão */
+  justify-content: center; /* Centraliza o conteúdo */
 }
 
 .logout-btn.collapsed span {
-  display: none;
+  display: none; /* Oculta o texto 'Sair' quando colapsado para mostrar apenas o ícone */
 }
 
-.logout-icon {
-  width: 20px;
-  height: 20px;
+.logout-btn svg {
+  width: 18px;
+  height: 18px;
   fill: none;
-  stroke: currentColor;
+  stroke: white;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -320,7 +321,7 @@
   border: none;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 8px; /* Reduzindo o espaçamento entre o ícone e o texto para um valor mínimo */
   justify-content: center;
 }
 
@@ -328,7 +329,7 @@
   width: 18px;
   height: 18px;
   fill: none;
-  stroke: currentColor;
+  stroke: white;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -566,7 +567,7 @@
 .card-number-priority {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 8px; /* Reduzindo o espaçamento entre o ícone e o texto para um valor mínimo */
   margin-bottom: 2px;
 }
 
@@ -707,7 +708,7 @@
   width: 16px;
   height: 16px;
   fill: none;
-  stroke: currentColor;
+  stroke: white;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -717,8 +718,8 @@
   background: none;
   border: none;
   color: #dc2626;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
   transition: color 0.2s;
 }
@@ -770,13 +771,12 @@
     display: none;
   }
 
-  .sidebar .logout-btn {
-    width: 50px;
-    padding: 10px;
-    border-radius: 50%;
-  }
-
-  .sidebar .logout-btn span {
+  .sidebar.collapsed .logout-btn {
+  width: auto; /* Permite que a largura se ajuste ao conteúdo */
+  padding: 6px 10px; /* Mantém o padding reduzido */
+  border-radius: 8px; /* Mantém o border-radius padrão */
+  justify-content: center; /* Centraliza o conteúdo */
+}  .sidebar .logout-btn span {
     display: none;
   }
 
@@ -945,6 +945,16 @@
   background-color: #fef2f2;
   color: #dc2626;
   border-left-color: #dc2626;
+}
+
+
+
+
+
+.logout-button-fix {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  padding: 4px 8px !important;
 }
 
 
