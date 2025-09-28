@@ -80,6 +80,8 @@
 .table-responsive {
   overflow-x: auto;
   width: 100%;
+  max-height: calc(100vh - 380px); /* Define uma altura máxima calculada */
+  overflow-y: auto;  
 }
 
 .relatorio-table {

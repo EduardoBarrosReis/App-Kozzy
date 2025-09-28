@@ -102,7 +102,7 @@ export class CreateTicketModalComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private chamadosService: ChamadosService
+    private chamadosService: ChamadosService,
   ) {}
 
   ngOnInit() {
@@ -367,5 +367,6 @@ export class CreateTicketModalComponent implements OnInit {
     
     return '';
   }
+  
 }
 

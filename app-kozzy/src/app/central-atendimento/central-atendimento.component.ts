@@ -1,11 +1,15 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet, RouterModule } from '@angular/router';
 import { ChamadosService, Chamado, NovoChamado, RelatorioFilters } from '../chamados.service';
 import { CreateTicketModalComponent } from '../create-ticket-modal/create-ticket-modal.component';
 import { RelatorioFiltroModalComponent } from '../relatorio-filtro-modal/relatorio-filtro-modal.component';
 import { RelatorioScreenComponent } from '../relatorio-screen/relatorio-screen.component';
 import { Subscription } from 'rxjs';
+import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { AuthService } from '../auth.service';
+
 
 interface MenuItem {
   label: string;
@@ -20,7 +24,11 @@ interface Usuario {
   nome: string;
   email: string;
 }
-
+interface ToastMessage {
+  message: string;
+  type: 'success' | 'info' | 'warning' | 'error';
+  visible: boolean;
+}
 @Component({
   selector: 'app-central-atendimento',
   standalone: true,
@@ -52,10 +60,14 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
 
   currentFilter: string = 'todos';
 
-  usuarioLogado: Usuario = { nome: 'Usuário Teste', email: 'teste@kozzy.com' };
+  usuarioLogado: Usuario|null = { nome: 'Usuário Teste', email: 'teste@kozzy.com' };
 
   menuItems: MenuItem[] = [];
-
+toast: ToastMessage = {
+    message: '',
+    type: 'info',
+    visible: false
+  };
   statusFilters = [
     { label: 'Todos', value: 'todos', icon: '📄', count: 0, active: true },
     { label: 'Abertos', value: 'aberto', icon: '🔴', count: 0, active: false },
@@ -63,7 +75,7 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
     { label: 'Fechados', value: 'fechado', icon: '🟢', count: 0, active: false },
   ];
 
-  constructor(private chamadosService: ChamadosService) {}
+  constructor(private chamadosService: ChamadosService, private authService: AuthService, private router: Router) {}
 
   ngOnInit(): void {
     this.chamadosSubscription = this.chamadosService.chamados$.subscribe((chamados) => {
@@ -287,10 +299,25 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
     URL.revokeObjectURL(url);
     console.log('Exportando dados...');
   }
+showToast(message: string, type: 'success' | 'info' | 'warning' | 'error') {
+    this.toast = {
+      message,
+      type,
+      visible: true
+    };
 
-  logout(): void {
-    console.log('Usuário deslogado');
-    // Implementar lógica de logout
+    // Auto-hide após 2 segundos
+    setTimeout(() => {
+      this.toast.visible = false;
+    }, 2000);
   }
+  logout(): void {
+    if (confirm('Tem certeza que deseja sair?')) {
+      this.authService.logout();
+      this.showToast('Logout realizado com sucesso!', 'success');
+      // O redirecionamento é feito automaticamente pelo AuthService
+    }
+  }
+
 }
 
