@@ -26,40 +26,10 @@
     </div>
   </div>
 
-  <!-- Estatísticas do Relatório -->
-  <div class="relatorio-stats" *ngIf="chamados && chamados.length > 0">
-    <div class="stat-card">
-      <div class="stat-icon total">📊</div>
-      <div class="stat-info">
-        <span class="stat-number">{{ chamados.length }}</span>
-        <span class="stat-label">Total de Chamados</span>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon abertos">🔴</div>
-      <div class="stat-info">
-        <span class="stat-number">{{ getStatusCount('aberto') }}</span>
-        <span class="stat-label">Abertos</span>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon andamento">🟡</div>
-      <div class="stat-info">
-        <span class="stat-number">{{ getStatusCount('em-andamento') }}</span>
-        <span class="stat-label">Em Andamento</span>
-      </div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon fechados">🟢</div>
-      <div class="stat-info">
-        <span class="stat-number">{{ getStatusCount('fechado') }}</span>
-        <span class="stat-label">Fechados</span>
-      </div>
-    </div>
-  </div>
+  
 
   <!-- Tabela de Relatório -->
-  <app-relatorio-tabela *ngIf="chamados && chamados.length > 0" [chamados]="chamados"></app-relatorio-tabela>
+  <app-relatorio-tabela [chamados]="chamados"></app-relatorio-tabela>
 
   <!-- Estado Vazio -->
   <div *ngIf="!chamados || chamados.length === 0" class="empty-state">

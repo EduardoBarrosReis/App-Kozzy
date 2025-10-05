@@ -80,7 +80,7 @@
 .table-responsive {
   overflow-x: auto;
   width: 100%;
-  max-height: calc(100vh - 380px); /* Define uma altura máxima calculada */
+  max-height: calc(100vh - 380px);
   overflow-y: auto;  
 }
 
@@ -90,17 +90,17 @@
   background-color: white;
 }
 
-/* Cabeçalho da Tabela */
+/* --- CABEÇALHO DA TABELA (ESTILO ATUALIZADO) --- */
 .relatorio-table th {
   padding: 16px 20px;
   text-align: left;
-  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
-  color: #dc2626;
-  font-weight: 700;
-  font-size: 0.875rem;
+  background-color: #f8fafc; /* Fundo cinza claro e limpo */
+  color: #475569; /* Cor do texto mais escura e profissional */
+  font-weight: 600; /* Um pouco menos "pesado" que 700 */
+  font-size: 0.75rem; /* Tamanho menor para cabeçalhos */
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: 2px solid #fecaca;
+  border-bottom: 2px solid #e2e8f0; /* Borda inferior sólida */
   position: sticky;
   top: 0;
   z-index: 10;
@@ -113,9 +113,10 @@
 }
 
 .relatorio-table th.sortable:hover {
-  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
-  color: #b91c1c;
+  background-color: #f1f5f9; /* Fundo um pouco mais escuro no hover */
+  color: #1e293b;
 }
+/* --- FIM DA SEÇÃO ATUALIZADA --- */
 
 .relatorio-table th.sortable span {
   display: flex;
@@ -542,28 +543,50 @@
 
 /* Impressão */
 @media print {
+  /* Remove elementos desnecessários da tabela durante a impressão */
   .table-header,
   .table-footer,
-  .action-buttons {
+  .actions-cell,
+  .actions-header { /* Esconde a coluna "Ações" */
     display: none;
   }
 
-  .relatorio-table {
+  /* Remove o scroll e a sombra, ajustando para a página de impressão */
+  .table-container {
     box-shadow: none;
-    border: 1px solid #000;
+    border: 1px solid #ccc;
+    border-radius: 0;
+  }
+  .table-responsive {
+    overflow: visible !important;
+    max-height: none !important;
   }
 
-  .relatorio-table th,
-  .relatorio-table td {
-    border: 1px solid #000;
+  /* Estilos básicos para a tabela na impressão */
+  .relatorio-table {
+    font-size: 10pt;
+    border-collapse: collapse;
+    width: 100%; /* Garante que ocupe a largura da página */
+  }
+  .relatorio-table th, .relatorio-table td {
+    border: 1px solid #ddd;
     padding: 8px;
   }
+  .relatorio-table th {
+    background-color: #f2f2f2 !important; /* Fundo simples para o cabeçalho */
+    color: #333 !important;
+  }
 
-  .status-badge,
-  .priority-badge {
-    border: 1px solid #000;
-    background: white !important;
-    color: black !important;
+  /* Simplifica os badges de status e prioridade */
+  .status-badge, .priority-badge {
+    background: transparent !important;
+    color: #000 !important;
+    border: none;
+    padding: 0;
+    border-radius: 0;
+    font-weight: normal;
+  }
+  .status-dot, .priority-icon {
+    display: none; /* Esconde os ícones e bolinhas coloridas */
   }
 }
-

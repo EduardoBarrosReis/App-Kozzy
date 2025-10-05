@@ -94,7 +94,13 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
   }
 
   abrirModalEdicao(chamado: Chamado): void {
-    this.chamadoSelecionado = { ...chamado }; // Cria uma cópia para evitar mutação direta
+    // Se o usuário for um atendente, verifica se o chamado pertence a ele
+    if (this.usuarioLogado?.perfil === 'atendente' && chamado.atendente !== this.usuarioLogado.nome) {
+      this.showToast('Você só pode editar os chamados que estão atribuídos a você.', 'warning');
+      return; // Impede a abertura do modal
+    }
+    
+    this.chamadoSelecionado = { ...chamado };
     this.showCreateModal = true;
   }
 

@@ -94,7 +94,7 @@
           </div>
         </div>
 
-        <div class="form-group" *ngIf="isEditMode">
+        <div class="form-group" *ngIf="isEditMode && perfilUsuario === 'supervisor'">
           <label for="atendente" class="form-label required">
             Atendente Responsável
             <span class="field-info">*</span>
@@ -146,7 +146,7 @@
           </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" *ngIf="isEditMode && perfilUsuario === 'supervisor'">
           <label for="prioridade" class="form-label">
             Nível de Prioridade
             <span class="field-optional">(opcional)</span>

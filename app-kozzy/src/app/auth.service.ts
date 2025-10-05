@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 
-// Interface para definir os tipos de usuário
+// Interface para definir os tipos de usuário na "base de dados"
 interface Usuario {
   email: string;
   password: string;
@@ -27,21 +27,24 @@ export class AuthService {
   private usuarioLogadoSubject = new BehaviorSubject<UsuarioLogado | null>(null);
   public usuarioLogado$ = this.usuarioLogadoSubject.asObservable();
 
-  // A lista de usuários agora começa vazia e será carregada
   private usuarios: Usuario[] = [];
 
   constructor(private router: Router) {
-    this.carregarUsuarios(); // Carrega usuários do localStorage ou inicia com padrão
+    this.carregarUsuarios();
     this.verificarUsuarioLogado();
   }
 
-  // Carrega usuários do storage ou usa a lista inicial
+  // ADICIONE ESTE NOVO MÉTODO
+  getTodosUsuarios(): Usuario[] {
+    // Retorna uma cópia da lista de usuários
+    return [...this.usuarios];
+  }
+
+  // --- O RESTO DO SEU SERVIÇO CONTINUA IGUAL ---
   private carregarUsuarios(): void {
     const usuariosSalvos = localStorage.getItem(this.USERS_STORAGE_KEY);
-    if (usuariosSalvos) {
-      this.usuarios = JSON.parse(usuariosSalvos);
-    } else {
-      // Se não houver nada salvo, usa a lista padrão e salva pela primeira vez
+    if (usuariosSalvos) { this.usuarios = JSON.parse(usuariosSalvos); } 
+    else {
       this.usuarios = [
         { email: 'supervisor', password: '123', perfil: 'supervisor', nome: 'Admin Supervisor' },
         { email: 'teste', password: '123', perfil: 'atendente', nome: 'Usuário Teste' },

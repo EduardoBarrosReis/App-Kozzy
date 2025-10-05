@@ -53,7 +53,9 @@
         </div>
 
         <div class="chamados-grid">
-          <div *ngFor="let chamado of getChamadosFiltrados()" class="chamado-card">
+          <div *ngFor="let chamado of getChamadosFiltrados()" 
+               class="chamado-card"
+               (click)="abrirModalEdicao(chamado)">
              <div class="card-header"><span class="card-number">#{{ chamado.numeroProtocolo }}</span><span class="status-badge" [class]="getStatusClass(chamado.status)">{{ getStatusLabel(chamado.status) }}</span></div>
              <div class="card-content"><h3 class="card-title">{{ chamado.cliente }}</h3><p class="card-description">{{ chamado.descricao }}</p><div class="card-details"><div class="detail-item"><p class="detail-label">Atendente</p><p class="detail-value">{{ chamado.atendente }}</p></div><div class="detail-item"><p class="detail-label">Prioridade</p><p class="detail-value" [class]="getPrioridadeClass(chamado.prioridade)">{{ getPrioridadeLabel(chamado.prioridade) }}</p></div></div></div>
              <div class="card-footer"><span class="card-meta">📅 {{ formatarData(chamado.dataAbertura) }}</span><a class="details-btn">Ver detalhes →</a></div>
@@ -70,12 +72,28 @@
   </main>
 </div>
 
-<app-relatorio-filtro-modal [isVisible]="showRelatorioFiltrosModal" (closeModal)="fecharModalRelatorioFiltros()" (gerarRelatorioEvent)="onGerarRelatorio($event)"></app-relatorio-filtro-modal>
+<app-create-ticket-modal
+  [isVisible]="showTicketModal"
+  [chamadoParaEditar]="chamadoSelecionado"
+  [perfilUsuario]="authService.getUsuarioLogado()?.perfil || 'supervisor'"
+  [usuarioLogadoNome]="usuarioLogado?.nome || ''"
+  (closeModal)="fecharTicketModal()"
+  (chamadoCriado)="onChamadoCriado($event)"
+  (chamadoAtualizado)="onChamadoAtualizado($event)">
+</app-create-ticket-modal>
+
 <app-criar-usuario-modal
     [isVisible]="showCriarUsuarioModal"
     (closeModal)="fecharModalCriarUsuario()"
     (usuarioCriado)="onUsuarioCriado($event)">
 </app-criar-usuario-modal>
+
+<app-relatorio-filtro-modal 
+    [isVisible]="showRelatorioFiltrosModal" 
+    (closeModal)="fecharModalRelatorioFiltros()" 
+    (gerarRelatorioEvent)="onGerarRelatorio($event)">
+</app-relatorio-filtro-modal>
+    
 <div class="toast-container" [class.show]="toast.visible" *ngIf="toast.visible">
   <div class="toast" [class]="'toast-' + toast.type">{{ toast.message }}</div>
 </div>

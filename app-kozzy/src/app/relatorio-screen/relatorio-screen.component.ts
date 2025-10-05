@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chamado } from '../chamados.service';
 import { RelatorioTabelaComponent } from '../relatorio-tabela/relatorio-tabela.component';
-
+import * as XLSX from 'xlsx'; // 1. IMPORTE A BIBLIOTECA XLSX
 @Component({
   selector: 'app-relatorio-screen',
   standalone: true,
@@ -19,16 +19,16 @@ export class RelatorioScreenComponent {
     return this.chamados.filter(chamado => chamado.status === status).length;
   }
 
-  exportarRelatorio(): void {
+   exportarRelatorio(): void {
     if (!this.chamados || this.chamados.length === 0) {
       alert('Não há dados para exportar');
       return;
     }
 
-    // Preparar dados para exportação
-    const dadosExportacao = this.chamados.map(chamado => ({
-      'Nº Protocolo': chamado.numeroProtocolo,
-      'Cliente': chamado.cliente,
+    // Mapeia e renomeia as colunas para a planilha
+    const dadosParaPlanilha = this.chamados.map(chamado => ({
+      'Protocolo': chamado.numeroProtocolo,
+      'Cliente': chamado.cliente.replace(/🚴|👤|🏪/g, '').trim(), // Remove ícones
       'Status': this.getStatusLabel(chamado.status),
       'Data': chamado.dataAbertura,
       'Hora': chamado.horaAbertura,
@@ -38,25 +38,30 @@ export class RelatorioScreenComponent {
       'Descrição': chamado.descricao
     }));
 
-    // Converter para CSV
-    const headers = Object.keys(dadosExportacao[0]);
-    const csvContent = [
-      headers.join(','),
-      ...dadosExportacao.map(row => 
-        headers.map(header => `"${row[header as keyof typeof row] || ''}"`).join(',')
-      )
-    ].join('\n');
+    // Cria a planilha a partir do array de objetos
+    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(dadosParaPlanilha);
 
-    // Download do arquivo
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `relatorio-chamados-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Ajusta a largura das colunas (opcional, mas melhora a aparência)
+const objectMaxLength: number[] = [];
+    for (let i = 0; i < dadosParaPlanilha.length; i++) {
+      let value = Object.values(dadosParaPlanilha[i]);
+      for (let j = 0; j < value.length; j++) {
+        if (typeof value[j] == "number") {
+          objectMaxLength[j] = 10;
+        } else if (typeof value[j] == "string") {
+          objectMaxLength[j] = Math.max(objectMaxLength[j] || 0, value[j].length);
+        }
+      }
+    }
+    ws['!cols'] = objectMaxLength.map(w => ({ width: w + 2 }));
+
+
+    // Cria o "livro" do Excel e adiciona a planilha
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Chamados');
+
+    // Gera o arquivo e inicia o download
+    XLSX.writeFile(wb, `Relatorio_Chamados_${new Date().toISOString().split('T')[0]}.xlsx`);
   }
 
   private getStatusLabel(status: string): string {
