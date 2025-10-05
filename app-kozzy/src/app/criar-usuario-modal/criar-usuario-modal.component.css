@@ -1,0 +1,189 @@
+/* src/app/criar-usuario-modal/criar-usuario-modal.component.css (CÓDIGO COMPLETO COM CABEÇALHO VERMELHO E TEXTO BRANCO) */
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  /* animation: fadeIn 0.3s ease; -- Removido */
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  width: 90%; 
+  max-width: 600px; /* << NOVO VALOR */
+  display: flex;
+  flex-direction: column;
+  /* animation: slideIn 0.3s ease-out; -- Removido */
+  overflow: hidden; /* Garante que bordas arredondadas funcionem */
+}
+
+.modal-header {
+  padding: 20px 25px;
+  border-bottom: 1px solid #e0e0e0; /* Manter se quiser a linha divisória, mas o fundo vermelho já destaca */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); /* Fundo vermelho */
+  color: white; /* Fonte branca */
+}
+
+.modal-header h2 { 
+  margin: 0; 
+  font-size: 20px; 
+  color: white; /* Cor da fonte branca */
+  font-weight: 600; 
+}
+
+.close-button { 
+  background: rgba(255, 255, 255, 0.2); /* Fundo sutil para o X, para contraste */
+  border: none; 
+  border-radius: 50%; /* Deixa o X redondinho */
+  width: 32px; /* Tamanho do botão X */
+  height: 32px; /* Tamanho do botão X */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer; 
+  color: white; /* Cor do X branca */
+  font-size: 24px; /* Tamanho do X */
+  line-height: 1; 
+  padding: 0; 
+  transition: all 0.2s ease;
+}
+.close-button:hover { 
+  background: rgba(255, 255, 255, 0.3); /* Mais claro no hover */
+  transform: scale(1.1); /* Pequeno zoom no hover */
+}
+
+.modal-body { 
+  padding: 25px; 
+  flex-grow: 1; 
+  overflow-y: auto; 
+}
+
+.form-group { 
+  margin-bottom: 20px; 
+}
+
+.form-group label { 
+  display: block; 
+  margin-bottom: 8px; 
+  font-weight: 500; 
+  font-size: 14px; 
+  color: #444; 
+}
+
+.form-group input, 
+.form-group select { 
+  width: 100%; 
+  height: 48px; 
+  padding: 0 14px; 
+  border: 1px solid #dcdcdc; 
+  border-radius: 8px; 
+  font-size: 15px; 
+  color: #333;
+  background-color: #fcfcfc; 
+  transition: all 0.3s ease;
+  box-sizing: border-box; /* <<< ADICIONE ESTA LINHA */
+}
+
+.form-group input::placeholder {
+  color: #999;
+}
+
+.form-group input:focus, 
+.form-group select:focus { 
+  outline: none; 
+  border-color: #c41e3a; 
+  box-shadow: 0 0 0 3px rgba(196, 30, 58, 0.1); 
+  background-color: #ffffff; 
+}
+
+.form-group input.ng-invalid.ng-touched,
+.form-group select.ng-invalid.ng-touched {
+  border-color: #e74c3c; 
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+}
+
+.modal-footer {
+  padding: 18px 25px; 
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px; 
+  background-color: #fcfcfc; 
+}
+
+.btn-cancelar, .btn-criar {
+  padding: 10px 22px; 
+  border-radius: 8px; 
+  font-size: 15px; 
+  font-weight: 600; 
+  cursor: pointer; 
+  border: 1px solid transparent; 
+  transition: all 0.2s ease;
+  text-transform: uppercase; 
+}
+
+.btn-cancelar { 
+  background-color: #f0f2f5; 
+  color: #555; 
+  border-color: #d8dee6; 
+}
+.btn-cancelar:hover { 
+  background-color: #e0e3e8; 
+  color: #333;
+}
+
+.btn-criar { 
+  background-color: #c41e3a; 
+  color: white; 
+  border-color: #c41e3a; 
+}
+.btn-criar:hover { 
+  background-color: #a3182f; 
+  transform: translateY(-1px); 
+}
+.btn-criar:disabled { 
+  background-color: #e9aeb7; 
+  border-color: #e9aeb7;
+  cursor: not-allowed; 
+  transform: none;
+}
+
+.error-message { 
+  color: #e74c3c; 
+  font-size: 12px; 
+  margin-top: 6px; 
+  font-weight: 500;
+}
+
+/* Animações (mantidas as regras, mas removida a aplicação nos elementos) */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideIn { from { transform: translateY(-30px) scale(0.95); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+
+/* Responsividade básica */
+@media (max-width: 550px) {
+  .modal-content {
+    margin: 15px;
+  }
+  .modal-header, .modal-footer {
+    padding: 15px 20px;
+  }
+  .modal-body {
+    padding: 20px;
+  }
+  /* .form-actions { -- Esta classe não existe no seu HTML atual para o modal -- */
+    /* flex-direction: column; */
+    /* gap: 10px; */
+  /* } */
+}

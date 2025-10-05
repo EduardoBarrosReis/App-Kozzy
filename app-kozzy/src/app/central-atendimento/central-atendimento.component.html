@@ -1,8 +1,6 @@
 <div class="app-container">
-  <!-- Menu Lateral -->
   <aside class="sidebar" [class.collapsed]="menuCollapsed">
     
-    <!-- Logo -->
     <div class="logo-section">
       <div class="logo-content" [class.hidden]="menuCollapsed">
         <div class="logo-wrapper">
@@ -22,14 +20,12 @@
       </div>
     </div>
 
-    <!-- Toggle Button (Mobile) -->
     <button class="menu-toggle" (click)="toggleMenu()">
       <svg viewBox="0 0 24 24">
         <path d="M4 6h16M4 12h16M4 18h16"></path>
       </svg>
     </button>
 
-    <!-- Menu Items -->
     <nav class="navigation">
       <ul class="menu-list">
         <li *ngFor="let item of menuItems">
@@ -50,7 +46,6 @@
                [class.active]="item.active">
               <span class="menu-icon">{{ item.icon }}</span>
               <span class="menu-label" [class.hidden]="menuCollapsed">{{ item.label }}</span>
-              <!-- Badge -->
               <span *ngIf="item.badge && !menuCollapsed" class="menu-badge">
                 {{ item.badge }}
               </span>
@@ -60,7 +55,6 @@
       </ul>
     </nav>
 
-    <!-- User Info com Logout -->
     <div class="user-section">
       <div class="user-info" [class.hidden]="menuCollapsed" *ngIf="usuarioLogado">
         <div class="user-avatar">
@@ -72,7 +66,6 @@
         </div>
       </div>
       
-      <!-- Botão de Logout -->
       <button (click)="logout()" class="logout-btn logout-button-fix" [class.collapsed]="menuCollapsed" title="Sair do sistema">
         <svg viewBox="0 0 24 24">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 012-2h4"></path>
@@ -84,11 +77,8 @@
     </div>
   </aside>
 
-  <!-- Área Principal -->
   <main class="main-content">
-    <!-- Conteúdo principal da Central de Atendimento (visível se não estiver na tela de relatório) -->
     <ng-container *ngIf="!showRelatorioScreen">
-      <!-- Header -->
       <header class="header">
         <div class="header-content">
           <div class="header-left">
@@ -117,7 +107,6 @@
       </header>
 
       <div class="content">
-        <!-- Stats Cards -->
         <div class="stats-grid">
           <div class="stat-card" *ngFor="let filter of statusFilters">
             <div class="stat-content">
@@ -132,7 +121,6 @@
           </div>
         </div>
 
-        <!-- Filtros -->
         <div class="filters-section">
           <h3 class="filters-title">Filtros</h3>
           <div class="filters-list">
@@ -145,14 +133,12 @@
           </div>
         </div>
 
-        <!-- Lista de Chamados -->
         <div class="chamados-grid">
           <div *ngFor="let chamado of getFilteredChamados()" 
                class="chamado-card"
                [class.novo-chamado]="chamado.isNovo"
-               (click)="abrirChamado(chamado)">
+               (click)="abrirModalEdicao(chamado)">
             
-            <!-- Header do Card -->
             <div class="card-header">
               <div class="card-header-left">
                 <div class="card-icon">
@@ -172,14 +158,11 @@
               </span>
             </div>
 
-            <!-- Conteúdo do Card -->
             <div class="card-content">
-              <!-- Descrição -->
               <div class="card-description">
                 <p>{{ chamado.descricao }}</p>
               </div>
 
-              <!-- Informações Adicionais -->
               <div class="card-details">
                 <div class="detail-item">
                   <p class="detail-label">Categoria</p>
@@ -198,7 +181,6 @@
                 </div>
               </div>
 
-              <!-- Footer do Card -->
               <div class="card-footer">
                 <div class="card-meta">
                   <div class="meta-item">
@@ -223,7 +205,6 @@
           </div>
         </div>
 
-        <!-- Mensagem quando não há chamados -->
         <div *ngIf="getFilteredChamados().length === 0" class="empty-state">
           <div class="empty-icon">📥</div>
           <h3>Nenhum chamado encontrado</h3>
@@ -238,7 +219,6 @@
       </div>
     </ng-container>
 
-    <!-- Tela de Relatório (visível se showRelatorioScreen for true) -->
     <app-relatorio-screen
       *ngIf="showRelatorioScreen"
       [chamados]="relatorioChamados"
@@ -248,23 +228,17 @@
   </main>
 </div>
 
-<!-- Modais -->
 <app-create-ticket-modal
   [isVisible]="showCreateModal"
-  (closeModal)="fecharModalCriarChamado()"
+  [chamadoParaEditar]="chamadoSelecionado"
+  [perfilUsuario]="authService.getUsuarioLogado()?.perfil || 'atendente'"
+  [usuarioLogadoNome]="usuarioLogado?.nome || ''" (closeModal)="fecharModal()"
   (chamadoCriado)="onChamadoCriado($event)"
+  (chamadoAtualizado)="onChamadoAtualizado($event)"
 ></app-create-ticket-modal>
 
-<!-- Removido temporariamente para evitar erros de compilação -->
-<!-- <app-buscar-cliente-modal
-  [isVisible]="showBuscarClienteModal"
-  (closeModal)="fecharModalBuscarCliente()"
-></app-buscar-cliente-modal> -->
-
-<!-- Modal de Filtros de Relatório - Aparece por cima de tudo quando ativo -->
 <app-relatorio-filtro-modal
   [isVisible]="showRelatorioFiltrosModal"
   (closeModal)="fecharModalRelatorioFiltros()"
   (gerarRelatorioEvent)="onGerarRelatorio($event)"
 ></app-relatorio-filtro-modal>
-

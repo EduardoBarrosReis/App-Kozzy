@@ -1,13 +1,10 @@
-<!-- Modal Overlay -->
 <div 
   class="modal-overlay" 
   *ngIf="isVisible"
   (click)="onOverlayClick($event)"
   [@fadeIn]
 >
-  <!-- Modal Container -->
   <div class="modal-container" [@slideIn]>
-    <!-- Modal Header -->
     <div class="modal-header">
       <h2 class="modal-title">
         <span *ngIf="!showPreview">📝 Criar Novo Chamado</span>
@@ -23,13 +20,10 @@
       </button>
     </div>
 
-    <!-- Modal Body -->
     <div class="modal-body">
       
-      <!-- Formulário -->
       <form [formGroup]="ticketForm" *ngIf="!showPreview" class="ticket-form">
         
-        <!-- Nº do Protocolo -->
         <div class="form-group">
           <label for="numeroProtocolo" class="form-label required">
             Nº do Protocolo
@@ -52,7 +46,6 @@
           </div>
         </div>
 
-        <!-- Cliente -->
         <div class="form-group">
           <label for="cliente" class="form-label required">
             Tipo de Cliente
@@ -77,7 +70,6 @@
           </div>
         </div>
 
-        <!-- Assunto -->
         <div class="form-group">
           <label for="assunto" class="form-label required">
             Categoria do Assunto
@@ -102,23 +94,14 @@
           </div>
         </div>
 
-        <!-- Atendente -->
-        <div class="form-group">
+        <div class="form-group" *ngIf="isEditMode">
           <label for="atendente" class="form-label required">
             Atendente Responsável
             <span class="field-info">*</span>
           </label>
-          <select
-            id="atendente"
-            formControlName="atendente"
-            class="form-select"
-            [class.error]="hasFieldError('atendente')"
-          >
+          <select id="atendente" formControlName="atendente" class="form-select" [class.error]="hasFieldError('atendente')">
             <option value="">Selecione o atendente responsável</option>
-            <option 
-              *ngFor="let option of atendenteOptions" 
-              [value]="option.value"
-            >
+            <option *ngFor="let option of atendenteOptions" [value]="option.value">
               {{ option.label }}
             </option>
           </select>
@@ -127,7 +110,6 @@
           </div>
         </div>
 
-        <!-- Data e Hora -->
         <div class="form-row">
           <div class="form-group">
             <label for="data" class="form-label required">
@@ -164,7 +146,6 @@
           </div>
         </div>
 
-        <!-- Prioridade -->
         <div class="form-group">
           <label for="prioridade" class="form-label">
             Nível de Prioridade
@@ -187,7 +168,6 @@
           </div>
         </div>
 
-        <!-- Descrição -->
         <div class="form-group">
           <label for="descricao" class="form-label">
             Descrição Detalhada
@@ -208,7 +188,6 @@
 
       </form>
 
-      <!-- Preview do Chamado -->
       <div *ngIf="showPreview" class="preview-container">
         <div class="preview-card">
           <h3 class="preview-title">📋 Resumo do Chamado</h3>
@@ -256,10 +235,8 @@
 
     </div>
 
-    <!-- Modal Footer -->
     <div class="modal-footer">
       
-      <!-- Botões do Formulário -->
       <div *ngIf="!showPreview" class="footer-buttons">
         <button 
           type="button" 
@@ -292,7 +269,6 @@
         </button>
       </div>
 
-      <!-- Botões do Preview -->
       <div *ngIf="showPreview" class="footer-buttons">
         <button 
           type="button" 
@@ -321,7 +297,6 @@
   </div>
 </div>
 
-<!-- Toast de Feedback -->
 <div 
   class="toast" 
   [class]="getToastClass()"
@@ -340,4 +315,3 @@
     </button>
   </div>
 </div>
-

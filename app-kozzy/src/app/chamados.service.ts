@@ -386,7 +386,18 @@ export class ChamadosService {
       console.log('🗑️ Todos os dados foram limpos e reinicializados');
     }
   }
-
+  atualizarChamado(chamadoAtualizado: Chamado): void {
+    const chamados = this.getChamadosSync();
+    const index = chamados.findIndex(c => c.id === chamadoAtualizado.id);
+    
+    if (index !== -1) {
+      chamados[index] = chamadoAtualizado;
+      this.salvarChamados(chamados);
+      console.log(`✅ Chamado #${chamadoAtualizado.numeroProtocolo} atualizado e salvo`);
+    } else {
+      console.error(`❌ Erro: Chamado com ID ${chamadoAtualizado.id} não encontrado para atualização.`);
+    }
+  }
   // Buscar chamados por cliente
   buscarChamadosPorCliente(termoCliente: string): Chamado[] {
     const chamados = this.getChamadosSync();

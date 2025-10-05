@@ -71,7 +71,11 @@
 </div>
 
 <app-relatorio-filtro-modal [isVisible]="showRelatorioFiltrosModal" (closeModal)="fecharModalRelatorioFiltros()" (gerarRelatorioEvent)="onGerarRelatorio($event)"></app-relatorio-filtro-modal>
-
+<app-criar-usuario-modal
+    [isVisible]="showCriarUsuarioModal"
+    (closeModal)="fecharModalCriarUsuario()"
+    (usuarioCriado)="onUsuarioCriado($event)">
+</app-criar-usuario-modal>
 <div class="toast-container" [class.show]="toast.visible" *ngIf="toast.visible">
   <div class="toast" [class]="'toast-' + toast.type">{{ toast.message }}</div>
 </div>
