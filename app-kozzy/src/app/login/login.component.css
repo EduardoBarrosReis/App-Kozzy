@@ -156,6 +156,9 @@
     font-weight: 500;
     transition: all 0.3s ease;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: relative;
+    z-index: 10;  /* garante que o link fique por cima */
+    cursor: pointer;
 }
 
 .forgot-password:hover {

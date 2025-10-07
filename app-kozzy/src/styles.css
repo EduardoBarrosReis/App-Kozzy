@@ -1,1 +1,32 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', sans-serif; /* Mantenha a fonte padrão que você usa */
+
+  /* A MÁGICA ACONTECE AQUI: */
+  /* Isso desativa a barra de rolagem do navegador para a página inteira. */
+  overflow: hidden;
+}
+
+@media print {
+  /* 1. Esconde TUDO na página por padrão */
+  body * {
+    visibility: hidden;
+  }
+
+  /* 2. Mostra APENAS a seção marcada como 'printable-section' e seu conteúdo */
+  .printable-section, .printable-section * {
+    visibility: visible;
+  }
+
+  /* 3. Garante que a seção de impressão ocupe toda a página */
+  .printable-section {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+}
 /* You can add global styles to this file, and also import other style files */

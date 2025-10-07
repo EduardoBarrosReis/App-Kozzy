@@ -1,0 +1,99 @@
+<div class="app-container">
+  <aside class="sidebar" [class.collapsed]="menuCollapsed">
+    <div class="logo-section">
+      <div class.="logo-content" [class.hidden]="menuCollapsed">
+        <div class="logo-wrapper">
+          <div class="logo-icon"><span>K</span></div>
+          <div class="logo-text"><h1>KOZZY</h1><p>Distribuidora</p></div>
+        </div>
+      </div>
+    </div>
+    <nav class="navigation">
+      <ul class="menu-list">
+        <li *ngFor="let item of menuItems">
+          <ng-container *ngIf="item.action"><button (click)="item.action()" class="menu-item" [class.active]="item.active"><span class="menu-icon">{{ item.icon }}</span><span class="menu-label" [class.hidden]="menuCollapsed">{{ item.label }}</span></button></ng-container>
+          <ng-container *ngIf="item.route"><a [routerLink]="item.route" routerLinkActive="active" class="menu-item"><span class="menu-icon">{{ item.icon }}</span><span class="menu-label" [class.hidden]="menuCollapsed">{{ item.label }}</span><span *ngIf="item.badge && !menuCollapsed" class="menu-badge">{{ item.badge }}</span></a></ng-container>
+        </li>
+      </ul>
+    </nav>
+    <div class="user-section">
+      <div class="user-info" [class.hidden]="menuCollapsed" *ngIf="usuarioLogado"><div class="user-avatar"><span>{{ usuarioLogado.nome?.charAt(0)?.toUpperCase() }}</span></div><div class="user-details"><p class="user-name">{{ usuarioLogado.nome }}</p><p class="user-email">{{ usuarioLogado.email }}</p></div></div>
+      <button (click)="logout()" class="logout-btn" [class.collapsed]="menuCollapsed" title="Sair"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16,17 21,12 16,7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg><span [class.hidden]="menuCollapsed">Sair</span></button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <ng-container *ngIf="!showRelatorioScreen">
+      <header class="header">
+        <div class="header-content">
+          <div class="header-title"><h1>Visão Geral do Supervisor</h1><p>Monitoramento em tempo real dos chamados da equipe</p></div>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="stats-grid">
+          <div class="stat-card" *ngFor="let kpi of kpis">
+            <div class="stat-content">
+              <div class="stat-icon" [class]="'stat-icon-' + kpi.color"><span>{{ kpi.icon }}</span></div>
+              <div class="stat-info">
+                <p class="stat-label">{{ kpi.label }}</p>
+                <p class="stat-value" [class]="'stat-value-' + kpi.color">{{ kpi.value }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="filters-section">
+          <div class="filters-list">
+            <button (click)="setFilter('status', 'todos')" [class.active]="filtros.status === 'todos'" class="filter-btn">Todos</button>
+            <button (click)="setFilter('status', 'aberto')" [class.active]="filtros.status === 'aberto'" class="filter-btn">Abertos</button>
+            <button (click)="setFilter('status', 'em-andamento')" [class.active]="filtros.status === 'em-andamento'" class="filter-btn">Em Andamento</button>
+            <button (click)="setFilter('status', 'fechado')" [class.active]="filtros.status === 'fechado'" class="filter-btn">Concluídos</button>
+          </div>
+        </div>
+
+        <div class="chamados-grid">
+          <div *ngFor="let chamado of getChamadosFiltrados()" 
+               class="chamado-card"
+               (click)="abrirModalEdicao(chamado)">
+             <div class="card-header"><span class="card-number">#{{ chamado.numeroProtocolo }}</span><span class="status-badge" [class]="getStatusClass(chamado.status)">{{ getStatusLabel(chamado.status) }}</span></div>
+             <div class="card-content"><h3 class="card-title">{{ chamado.cliente }}</h3><p class="card-description">{{ chamado.descricao }}</p><div class="card-details"><div class="detail-item"><p class="detail-label">Atendente</p><p class="detail-value">{{ chamado.atendente }}</p></div><div class="detail-item"><p class="detail-label">Prioridade</p><p class="detail-value" [class]="getPrioridadeClass(chamado.prioridade)">{{ getPrioridadeLabel(chamado.prioridade) }}</p></div></div></div>
+             <div class="card-footer"><span class="card-meta">📅 {{ formatarData(chamado.dataAbertura) }}</span><a class="details-btn">Ver detalhes →</a></div>
+          </div>
+        </div>
+        
+        <div *ngIf="getChamadosFiltrados().length === 0" class="empty-state">
+            <div class="empty-icon">📥</div><h3>Nenhum chamado encontrado</h3><p>Não há chamados para exibir.</p>
+        </div>
+      </div>
+    </ng-container>
+
+    <app-relatorio-screen *ngIf="showRelatorioScreen" [chamados]="relatorioChamados" (closeReportScreen)="fecharRelatorioScreen()"></app-relatorio-screen>
+  </main>
+</div>
+
+<app-create-ticket-modal
+  [isVisible]="showTicketModal"
+  [chamadoParaEditar]="chamadoSelecionado"
+  [perfilUsuario]="authService.getUsuarioLogado()?.perfil || 'supervisor'"
+  [usuarioLogadoNome]="usuarioLogado?.nome || ''"
+  (closeModal)="fecharTicketModal()"
+  (chamadoCriado)="onChamadoCriado($event)"
+  (chamadoAtualizado)="onChamadoAtualizado($event)">
+</app-create-ticket-modal>
+
+<app-criar-usuario-modal
+    [isVisible]="showCriarUsuarioModal"
+    (closeModal)="fecharModalCriarUsuario()"
+    (usuarioCriado)="onUsuarioCriado($event)">
+</app-criar-usuario-modal>
+
+<app-relatorio-filtro-modal 
+    [isVisible]="showRelatorioFiltrosModal" 
+    (closeModal)="fecharModalRelatorioFiltros()" 
+    (gerarRelatorioEvent)="onGerarRelatorio($event)">
+</app-relatorio-filtro-modal>
+    
+<div class="toast-container" [class.show]="toast.visible" *ngIf="toast.visible">
+  <div class="toast" [class]="'toast-' + toast.type">{{ toast.message }}</div>
+</div>
