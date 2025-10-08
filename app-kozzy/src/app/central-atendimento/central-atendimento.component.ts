@@ -1,18 +1,35 @@
-// src/app/central-atendimento.component.ts (CÓDIGO COMPLETO E CORRIGIDO)
+// src/app/central-atendimento/central-atendimento.component.ts
 
-import { Component, EventEmitter, Input, Output, OnInit, HostListener, OnDestroy } from '@angular/core';import { CommonModule } from '@angular/common';
-import { Router, RouterLink, RouterModule, RouterOutlet } from '@angular/router';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
+
+// Serviços e interfaces
 import { ChamadosService, Chamado, NovoChamado, RelatorioFilters } from '../chamados.service';
 import { AuthService, UsuarioLogado } from '../auth.service';
+
+// Componentes filhos
 import { CreateTicketModalComponent } from '../create-ticket-modal/create-ticket-modal.component';
 import { RelatorioFiltroModalComponent } from '../relatorio-filtro-modal/relatorio-filtro-modal.component';
 import { RelatorioScreenComponent } from '../relatorio-screen/relatorio-screen.component';
 
-// Interfaces locais para o componente
-interface MenuItem { label: string; icon: string; route?: string; action?: () => void; badge?: number; active?: boolean; }
-interface ToastMessage { message: string; type: 'success' | 'info' | 'warning' | 'error'; visible: boolean; }
+// Interfaces locais
+interface MenuItem {
+  label: string;
+  icon: string;
+  route?: string;
+  action?: () => void;
+  badge?: number;
+  active?: boolean;
+}
+
+interface ToastMessage {
+  message: string;
+  type: 'success' | 'info' | 'warning' | 'error';
+  visible: boolean;
+}
 
 @Component({
   selector: 'app-central-atendimento',
@@ -29,36 +46,40 @@ interface ToastMessage { message: string; type: 'success' | 'info' | 'warning' |
   styleUrls: ['./central-atendimento.component.css'],
 })
 export class CentralAtendimentoComponent implements OnInit, OnDestroy {
-  // --- Propriedades de Controle de Modais ---
-  showCreateModal: boolean = false; // Controla a visibilidade do modal de Criar/Editar
-  chamadoSelecionado: Chamado | null = null; // Guarda o chamado para edição
+  // --- Controle de modais ---
+  showCreateModal = false;
+  chamadoSelecionado: Chamado | null = null;
 
-  showRelatorioFiltrosModal: boolean = false;
-  showRelatorioScreen: boolean = false;
+  showRelatorioFiltrosModal = false;
+  showRelatorioScreen = false;
 
-  // --- Propriedades de Dados ---
+  // --- Dados e estado ---
   chamados: Chamado[] = [];
   relatorioChamados: Chamado[] = [];
   chamadosSubscription!: Subscription;
   filtrosRelatorioSalvos: RelatorioFilters | null = null;
   currentFilter: string = 'todos';
   usuarioLogado: UsuarioLogado | null = null;
+
   menuItems: MenuItem[] = [];
   toast: ToastMessage = { message: '', type: 'info', visible: false };
+
   statusFilters = [
     { label: 'Todos', value: 'todos', icon: '📄', count: 0, active: true },
     { label: 'Abertos', value: 'aberto', icon: '🔴', count: 0, active: false },
     { label: 'Em Andamento', value: 'em-andamento', icon: '🟡', count: 0, active: false },
     { label: 'Fechados', value: 'fechado', icon: '🟢', count: 0, active: false },
   ];
-  menuCollapsed: boolean = false;
+
+  menuCollapsed = false;
 
   constructor(
-    public chamadosService: ChamadosService,
-    public authService: AuthService,
+    private chamadosService: ChamadosService,
+    private authService: AuthService,
     private router: Router
   ) {}
 
+  // --- Ciclo de vida ---
   ngOnInit(): void {
     this.usuarioLogado = this.authService.getUsuarioLogado();
 
@@ -75,31 +96,24 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
       { label: 'Relatórios', icon: '📊', action: () => this.abrirModalRelatorios() },
       { label: 'Configurações', icon: '⚙️', route: '/configuracoes' },
     ];
-
-    this.updateStatusCounts();
-    this.updateMenuBadge();
   }
 
   ngOnDestroy(): void {
-    if (this.chamadosSubscription) {
-      this.chamadosSubscription.unsubscribe();
-    }
+    this.chamadosSubscription?.unsubscribe();
   }
 
-  // --- MÉTODOS PARA MODAL DE CRIAR/EDITAR CHAMADO ---
-
+  // --- Modais de chamado ---
   abrirModalCriarChamado(): void {
-    this.chamadoSelecionado = null; // Garante que não há um chamado selecionado
+    this.chamadoSelecionado = null;
     this.showCreateModal = true;
   }
 
   abrirModalEdicao(chamado: Chamado): void {
-    // Se o usuário for um atendente, verifica se o chamado pertence a ele
     if (this.usuarioLogado?.perfil === 'atendente' && chamado.atendente !== this.usuarioLogado.nome) {
-      this.showToast('Você só pode editar os chamados que estão atribuídos a você.', 'warning');
-      return; // Impede a abertura do modal
+      this.showToast('Você só pode editar os chamados atribuídos a você.', 'warning');
+      return;
     }
-    
+
     this.chamadoSelecionado = { ...chamado };
     this.showCreateModal = true;
   }
@@ -118,17 +132,8 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
     this.chamadosService.atualizarChamado(chamadoAtualizado);
     this.fecharModal();
   }
-  
-  // --- DEMAIS MÉTODOS DO COMPONENTE ---
 
-  toggleMenu(): void {
-    this.menuCollapsed = !this.menuCollapsed;
-  }
-  
-  abrirModalBuscarCliente(): void {
-    console.log('Abrir modal de busca de cliente - Funcionalidade em desenvolvimento');
-  }
-
+  // --- Relatórios ---
   abrirModalRelatorios(): void {
     this.showRelatorioScreen = false;
     this.relatorioChamados = [];
@@ -143,9 +148,8 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
     this.filtrosRelatorioSalvos = { ...filtros };
     this.relatorioChamados = this.chamadosService.buscarChamadosPorFiltros(filtros);
     this.showRelatorioFiltrosModal = false;
-    setTimeout(() => {
-      this.showRelatorioScreen = true;
-    }, 100);
+
+    setTimeout(() => (this.showRelatorioScreen = true), 100);
   }
 
   reabrirModalFiltros(): void {
@@ -158,58 +162,75 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
     this.filtrosRelatorioSalvos = null;
   }
 
-  getFiltrosSalvos(): RelatorioFilters | null {
-    return this.filtrosRelatorioSalvos;
-  }
-
+  // --- Utilitários ---
   updateStatusCounts(): void {
     this.statusFilters.forEach((filter) => {
-      if (filter.value === 'todos') {
-        filter.count = this.chamados.length;
-      } else {
-        filter.count = this.chamados.filter((c) => c.status === filter.value).length;
-      }
+      filter.count =
+        filter.value === 'todos'
+          ? this.chamados.length
+          : this.chamados.filter((c) => c.status === filter.value).length;
     });
   }
 
   updateMenuBadge(): void {
-    const chamadosItem = this.menuItems.find((item) => item.label === 'Chamados');
-    if (chamadosItem) {
-      chamadosItem.badge = this.chamados.filter((c) => c.status === 'aberto' || c.status === 'em-andamento').length;
+    const item = this.menuItems.find((i) => i.label === 'Chamados');
+    if (item) {
+      item.badge = this.chamados.filter(
+        (c) => c.status === 'aberto' || c.status === 'em-andamento'
+      ).length;
     }
   }
 
-  setFilter(filterValue: string): void {
-    this.currentFilter = filterValue;
-    this.statusFilters.forEach((filter) => (filter.active = filter.value === filterValue));
+  setFilter(value: string): void {
+    this.currentFilter = value;
+    this.statusFilters.forEach((f) => (f.active = f.value === value));
   }
 
   getFilteredChamados(): Chamado[] {
-    if (this.currentFilter === 'todos') {
-      return this.chamados;
-    }
-    return this.chamados.filter((chamado) => chamado.status === this.currentFilter);
+    return this.currentFilter === 'todos'
+      ? this.chamados
+      : this.chamados.filter((c) => c.status === this.currentFilter);
   }
 
   getStatusLabel(status: string): string {
-    const labels: {[key: string]: string} = { 'aberto': 'Aberto', 'em-andamento': 'Em Andamento', 'fechado': 'Fechado' };
+    const labels: Record<string, string> = {
+      'aberto': 'Aberto',
+      'em-andamento': 'Em Andamento',
+      'fechado': 'Fechado',
+    };
     return labels[status] || status;
   }
 
   getPrioridadeIcon(prioridade: string): string {
-    const icons: {[key: string]: string} = { 'baixa': '⬇️', 'media': '➡️', 'alta': '⬆️', 'urgente': '🚨' };
+    const icons: Record<string, string> = {
+      'baixa': '⬇️',
+      'media': '➡️',
+      'alta': '⬆️',
+      'urgente': '🚨',
+    };
     return icons[prioridade] || '';
   }
 
   getPrioridadeLabel(prioridade: string): string {
-    const labels: {[key: string]: string} = { 'baixa': 'Baixa', 'media': 'Média', 'alta': 'Alta', 'urgente': 'Urgente' };
+    const labels: Record<string, string> = {
+      'baixa': 'Baixa',
+      'media': 'Média',
+      'alta': 'Alta',
+      'urgente': 'Urgente',
+    };
     return labels[prioridade] || '';
   }
 
   formatDateTime(date: string, time: string): string {
     if (!date || !time) return '';
     const dt = new Date(`${date}T${time}`);
-    return dt.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    return dt.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   getTempoDecorrido(dataAbertura: string, horaAbertura: string): string {
@@ -223,8 +244,7 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
   }
 
   exportarDados(): void {
-    const data = JSON.stringify(this.chamados, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(this.chamados, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -233,9 +253,17 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
     URL.revokeObjectURL(url);
   }
 
-  showToast(message: string, type: 'success' | 'info' | 'warning' | 'error'): void {
+  showToast(message: string, type: ToastMessage['type']): void {
     this.toast = { message, type, visible: true };
-    setTimeout(() => { this.toast.visible = false; }, 3000);
+    setTimeout(() => (this.toast.visible = false), 3000);
+  }
+
+  abrirModalBuscarCliente(): void {
+    console.log('🔍 Buscar cliente — funcionalidade em desenvolvimento.');
+  }
+
+  toggleMenu(): void {
+    this.menuCollapsed = !this.menuCollapsed;
   }
 
   logout(): void {
