@@ -75,7 +75,7 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
 
   constructor(
     private chamadosService: ChamadosService,
-    private authService: AuthService,
+    public authService: AuthService,
     private router: Router
   ) {}
 
