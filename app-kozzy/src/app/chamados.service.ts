@@ -54,15 +54,128 @@ export class ChamadosService {
 
   // Dados iniciais de exemplo (Fonte da verdade)
   private dadosIniciais: Chamado[] = [
-    { id: '1', numeroProtocolo: '10234', cliente: '👤 João da Silva', descricao: 'Problema de conexão com a internet, cliente relatando lentidão', status: 'em-andamento', prioridade: 'alta', dataAbertura: '2024-01-15', horaAbertura: '14:30', tempoResposta: '2h 30min', categoria: 'Técnico', atendente: 'Mariana Silva', icone: '🔧', dataHoraCriacao: '2024-01-15T14:30:00.000Z' },
-    { id: '2', numeroProtocolo: '10235', cliente: '👤 Maria Oliveira', descricao: 'Cobrança indevida na fatura do mês anterior', status: 'aberto', prioridade: 'media', dataAbertura: '2024-01-15', horaAbertura: '15:15', tempoResposta: '45min', categoria: 'Financeiro', atendente: 'Fernanda Costa', icone: '💰', dataHoraCriacao: '2024-01-15T15:15:00.000Z' },
-    { id: '3', numeroProtocolo: '10236', cliente: '🚴 Carlos Santos', descricao: 'Solicitação de cancelamento do serviço', status: 'em-andamento', prioridade: 'baixa', dataAbertura: '2024-01-14', horaAbertura: '09:45', tempoResposta: '1h 15min', categoria: 'Comercial', atendente: 'Carla Santos', icone: '📞', dataHoraCriacao: '2024-01-14T09:45:00.000Z' },
-    { id: '4', numeroProtocolo: '10237', cliente: '👤 Ana Costa', descricao: 'Dúvida sobre faturamento e planos disponíveis', status: 'aberto', prioridade: 'baixa', dataAbertura: '2024-01-14', horaAbertura: '16:20', tempoResposta: '30min', categoria: 'Suporte', atendente: 'Rafael Oliveira', icone: '❓', dataHoraCriacao: '2024-01-14T16:20:00.000Z' },
-    { id: '5', numeroProtocolo: '10238', cliente: '🏪 Pedro Almeida', descricao: 'Instalação de novo equipamento', status: 'fechado', prioridade: 'media', dataAbertura: '2024-01-13', horaAbertura: '10:00', tempoResposta: '3h 20min', categoria: 'Técnico', atendente: 'Mariana Silva', icone: '🔧', dataHoraCriacao: '2024-01-13T10:00:00.000Z' },
-    { id: '6', numeroProtocolo: '10239', cliente: '👤 Lucia Ferreira', descricao: 'Troca de plano de internet', status: 'fechado', prioridade: 'baixa', dataAbertura: '2024-01-12', horaAbertura: '11:30', tempoResposta: '1h 45min', categoria: 'Comercial', atendente: 'Fernanda Costa', icone: '📞', dataHoraCriacao: '2024-01-12T11:30:00.000Z' },
-    { id: '7', numeroProtocolo: '10240', cliente: '🚴 Roberto Silva', descricao: 'Problema com roteador Wi-Fi', status: 'aberto', prioridade: 'urgente', dataAbertura: '2024-01-16', horaAbertura: '08:45', tempoResposta: '1h 10min', categoria: 'Técnico', atendente: 'Carla Santos', icone: '🔧', dataHoraCriacao: '2024-01-16T08:45:00.000Z' },
-    { id: '8', numeroProtocolo: '10241', cliente: '👤 Fernanda Costa', descricao: 'Solicitação de segunda via de boleto', status: 'em-andamento', prioridade: 'baixa', dataAbertura: '2024-01-16', horaAbertura: '13:35', tempoResposta: '25min', categoria: 'Financeiro', atendente: 'Rafael Oliveira', icone: '💰', dataHoraCriacao: '2024-01-16T13:35:00.000Z' }
-  ];
+  { 
+    id: '1', 
+    numeroProtocolo: '10234', 
+    cliente: '👤 Cliente Final', // Padrão Cliente Final
+    descricao: 'Problema de conexão com a internet, cliente relatando lentidão', 
+    status: 'em-andamento', 
+    prioridade: 'alta', 
+    dataAbertura: '2025-11-20', // Data Atualizada
+    horaAbertura: '14:30', 
+    tempoResposta: '2h 30min', 
+    categoria: '🔧 Suporte Técnico', 
+    atendente: 'Mariana Silva', 
+    icone: '🔧', 
+    dataHoraCriacao: '2025-11-20T14:30:00.000Z' 
+  },
+  { 
+    id: '2', 
+    numeroProtocolo: '10235', 
+    cliente: '👤 Cliente Final', // Padrão Cliente Final
+    descricao: 'Cobrança indevida na fatura do mês anterior', 
+    status: 'aberto', 
+    prioridade: 'media', 
+    dataAbertura: '2025-11-20', // Data Atualizada
+    horaAbertura: '15:15', 
+    tempoResposta: '45min', 
+    categoria: '💰 Financeiro', 
+    atendente: 'Fernanda Costa', 
+    icone: '💰', 
+    dataHoraCriacao: '2025-11-20T15:15:00.000Z' 
+  },
+  { 
+    id: '3', 
+    numeroProtocolo: '10236', 
+    cliente: '🚴 Entregador', // Padrão Entregador
+    descricao: 'Solicitação de cancelamento do serviço', 
+    status: 'em-andamento', 
+    prioridade: 'baixa', 
+    dataAbertura: '2025-11-21', // Data Atualizada
+    horaAbertura: '09:45', 
+    tempoResposta: '1h 15min', 
+    categoria: '📞 Comercial/Vendas', 
+    atendente: 'Carla Santos', 
+    icone: '📞', 
+    dataHoraCriacao: '2025-11-21T09:45:00.000Z' 
+  },
+  { 
+    id: '4', 
+    numeroProtocolo: '10237', 
+    cliente: '👤 Cliente Final', // Padrão Cliente Final
+    descricao: 'Dúvida sobre faturamento e planos disponíveis', 
+    status: 'aberto', 
+    prioridade: 'baixa', 
+    dataAbertura: '2025-11-21', // Data Atualizada
+    horaAbertura: '16:20', 
+    tempoResposta: '30min', 
+    categoria: '❓ Suporte', 
+    atendente: 'Rafael Oliveira', 
+    icone: '❓', 
+    dataHoraCriacao: '2025-11-21T16:20:00.000Z' 
+  },
+  { 
+    id: '5', 
+    numeroProtocolo: '10238', 
+    cliente: '🏪 Loja/Estabelecimento', // Padrão Loja
+    descricao: 'Instalação de novo equipamento', 
+    status: 'fechado', 
+    prioridade: 'media', 
+    dataAbertura: '2025-11-22', // Data Atualizada
+    horaAbertura: '10:00', 
+    tempoResposta: '3h 20min', 
+    categoria: '🔧 Suporte Técnico', 
+    atendente: 'Mariana Silva', 
+    icone: '🔧', 
+    dataHoraCriacao: '2025-11-22T10:00:00.000Z' 
+  },
+  { 
+    id: '6', 
+    numeroProtocolo: '10239', 
+    cliente: '👤 Cliente Final', // Padrão Cliente Final
+    descricao: 'Troca de plano de internet', 
+    status: 'fechado', 
+    prioridade: 'baixa', 
+    dataAbertura: '2025-11-22', // Data Atualizada
+    horaAbertura: '11:30', 
+    tempoResposta: '1h 45min', 
+    categoria: '📞 Comercial/Vendas', 
+    atendente: 'Fernanda Costa', 
+    icone: '📞', 
+    dataHoraCriacao: '2025-11-22T11:30:00.000Z' 
+  },
+  { 
+    id: '7', 
+    numeroProtocolo: '10240', 
+    cliente: '🚴 Entregador', // Padrão Entregador
+    descricao: 'Problema com roteador Wi-Fi', 
+    status: 'aberto', 
+    prioridade: 'urgente', 
+    dataAbertura: '2025-11-23', // Data Atualizada
+    horaAbertura: '08:45', 
+    tempoResposta: '1h 10min', 
+    categoria: '🔧 Suporte Técnico', 
+    atendente: 'Carla Santos', 
+    icone: '🔧', 
+    dataHoraCriacao: '2025-11-23T08:45:00.000Z' 
+  },
+  { 
+    id: '8', 
+    numeroProtocolo: '10241', 
+    cliente: '👤 Cliente Final', // Padrão Cliente Final
+    descricao: 'Solicitação de segunda via de boleto', 
+    status: 'em-andamento', 
+    prioridade: 'baixa', 
+    dataAbertura: '2025-11-24', // Data Atualizada
+    horaAbertura: '13:35', 
+    tempoResposta: '25min', 
+    categoria: '💰 Financeiro', 
+    atendente: 'Rafael Oliveira', 
+    icone: '💰', 
+    dataHoraCriacao: '2025-11-24T13:35:00.000Z' 
+  }
+];
+
 
   constructor(private authService: AuthService) {
     this.inicializarDados();
