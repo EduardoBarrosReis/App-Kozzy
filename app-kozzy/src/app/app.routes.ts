@@ -4,7 +4,7 @@ import { CentralAtendimentoComponent } from './central-atendimento/central-atend
 import { RecuperarComponent } from './recuperar/recuperar.component';
 import { SupervisorDashboardComponent } from './supervisor-dashboard/supervisor-dashboard.component';
 import { SupervisorGuard, AtendenteGuard } from './auth.guard';
-
+import { DesignSystemComponent } from './design-system/design-system.component'; // Importe
 
 
 export const routes: Routes = [
@@ -21,7 +21,16 @@ export const routes: Routes = [
     component: CentralAtendimentoComponent,
     canActivate: [AtendenteGuard]
   },
+  
+  {
+    path: 'design-system',
+    component: DesignSystemComponent,
+    // Se quiser proteger a rota, use o canActivate, senão, deixe livre para teste
+    // canActivate: [AtendenteGuard]
+  },
   // Rota curinga para redirecionar para o login se a rota não for encontrada
-  { path: '**', redirectTo: '/login' }
+  { path: '**', redirectTo: '/login' },
+
+  
 ];
 export class AppRoutingModule { }

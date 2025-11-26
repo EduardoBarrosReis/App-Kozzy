@@ -74,6 +74,7 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
       { label: 'Buscar Cliente', icon: '🔍', action: () => this.abrirModalBuscarCliente() },
       { label: 'Relatórios', icon: '📊', action: () => this.abrirModalRelatorios() },
       { label: 'Configurações', icon: '⚙️', route: '/configuracoes' },
+       { label: 'Design System', icon: '🎨', route: '/design-system' } 
     ];
 
     this.updateStatusCounts();
