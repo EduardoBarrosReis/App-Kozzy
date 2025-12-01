@@ -40,7 +40,10 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let chamado of chamadosOrdenados; trackBy: trackByChamado" class="table-row">
+            <tr *ngFor="let chamado of chamadosOrdenados; trackBy: trackByChamado" 
+                class="table-row clickable-row"
+                (click)="onRowClick(chamado)">
+                
               <td data-label="Protocolo">
                 <div class="protocol-wrapper">
                   <span class="protocol-number">#{{ chamado.numeroProtocolo }}</span>
@@ -77,7 +80,7 @@
                   <span class="attendant-name">{{ chamado.atendente }}</span>
                 </div>
               </td>
-              <td class="actions-cell">
+              <td class="actions-cell" (click)="$event.stopPropagation()">
                 <div class="action-buttons">
                   <button class="btn-action-small view" (click)="visualizarChamado(chamado)" title="Visualizar">
                     <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>

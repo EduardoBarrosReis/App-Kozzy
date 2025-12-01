@@ -26,12 +26,11 @@
     </div>
   </div>
 
-  
+  <app-relatorio-tabela 
+      [chamados]="chamados"
+      (rowClick)="chamadoSelecionado.emit($event)">
+  </app-relatorio-tabela>
 
-  <!-- Tabela de Relatório -->
-  <app-relatorio-tabela [chamados]="chamados"></app-relatorio-tabela>
-
-  <!-- Estado Vazio -->
   <div *ngIf="!chamados || chamados.length === 0" class="empty-state">
     <div class="empty-icon">🤷‍♂️</div>
     <h3>Nenhum chamado encontrado</h3>
@@ -44,4 +43,3 @@
     </button>
   </div>
 </div>
-

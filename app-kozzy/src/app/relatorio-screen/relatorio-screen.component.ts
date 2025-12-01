@@ -1,8 +1,9 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Chamado } from '../chamados.service';
+import { Chamado, RelatorioFilters } from '../chamados.service';
 import { RelatorioTabelaComponent } from '../relatorio-tabela/relatorio-tabela.component';
-import * as XLSX from 'xlsx'; // 1. IMPORTE A BIBLIOTECA XLSX
+import * as XLSX from 'xlsx';
+
 @Component({
   selector: 'app-relatorio-screen',
   standalone: true,
@@ -12,12 +13,22 @@ import * as XLSX from 'xlsx'; // 1. IMPORTE A BIBLIOTECA XLSX
 })
 export class RelatorioScreenComponent {
   @Input() chamados: Chamado[] = [];
+  @Input() filtrosUtilizados: RelatorioFilters | null = null;
+
   @Output() openFilterModal = new EventEmitter<void>();
   @Output() closeReportScreen = new EventEmitter<void>();
+  
+  // --- GARANTINDO QUE O OUTPUT EXISTA ---
+  @Output() chamadoSelecionado = new EventEmitter<Chamado>();
 
+  // Helpers
   getStatusCount(status: string): number {
     return this.chamados.filter(chamado => chamado.status === status).length;
   }
+
+  // Métodos que seu HTML pode estar chamando
+  onVoltar() { this.closeReportScreen.emit(); }
+  onEditarFiltros() { this.openFilterModal.emit(); }
 
    exportarRelatorio(): void {
     if (!this.chamados || this.chamados.length === 0) {
@@ -25,24 +36,23 @@ export class RelatorioScreenComponent {
       return;
     }
 
-    // Mapeia e renomeia as colunas para a planilha
     const dadosParaPlanilha = this.chamados.map(chamado => ({
       'Protocolo': chamado.numeroProtocolo,
-      'Cliente': chamado.cliente.replace(/🚴|👤|🏪/g, '').trim(), // Remove ícones
+      'Cliente': chamado.cliente.replace(/🚴|👤|🏪/g, '').trim(),
+      'Área': chamado.area || 'N/A',
       'Status': this.getStatusLabel(chamado.status),
       'Data': chamado.dataAbertura,
       'Hora': chamado.horaAbertura,
       'Prioridade': this.getPrioridadeLabel(chamado.prioridade),
       'Atendente': chamado.atendente,
-      'Categoria': chamado.categoria,
+      'Assunto': chamado.categoria,
       'Descrição': chamado.descricao
     }));
 
-    // Cria a planilha a partir do array de objetos
     const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(dadosParaPlanilha);
 
-    // Ajusta a largura das colunas (opcional, mas melhora a aparência)
-const objectMaxLength: number[] = [];
+    // Ajuste de colunas
+    const objectMaxLength: number[] = [];
     for (let i = 0; i < dadosParaPlanilha.length; i++) {
       let value = Object.values(dadosParaPlanilha[i]);
       for (let j = 0; j < value.length; j++) {
@@ -55,41 +65,19 @@ const objectMaxLength: number[] = [];
     }
     ws['!cols'] = objectMaxLength.map(w => ({ width: w + 2 }));
 
-
-    // Cria o "livro" do Excel e adiciona a planilha
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Chamados');
 
-    // Gera o arquivo e inicia o download
     XLSX.writeFile(wb, `Relatorio_Chamados_${new Date().toISOString().split('T')[0]}.xlsx`);
   }
 
   private getStatusLabel(status: string): string {
-    switch (status) {
-      case 'aberto':
-        return 'Aberto';
-      case 'em-andamento':
-        return 'Em Andamento';
-      case 'fechado':
-        return 'Fechado';
-      default:
-        return status;
-    }
+    const labels: any = { 'aberto': 'Aberto', 'em-andamento': 'Em Andamento', 'fechado': 'Fechado' };
+    return labels[status] || status;
   }
 
   private getPrioridadeLabel(prioridade: string): string {
-    switch (prioridade) {
-      case 'baixa':
-        return 'Baixa';
-      case 'media':
-        return 'Média';
-      case 'alta':
-        return 'Alta';
-      case 'urgente':
-        return 'Urgente';
-      default:
-        return prioridade;
-    }
+    const labels: any = { 'baixa': 'Baixa', 'media': 'Média', 'alta': 'Alta', 'urgente': 'Urgente' };
+    return labels[prioridade] || prioridade;
   }
 }
-

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chamado } from '../chamados.service';
 
@@ -9,8 +9,11 @@ import { Chamado } from '../chamados.service';
   templateUrl: './relatorio-tabela.component.html',
   styleUrl: './relatorio-tabela.component.css'
 })
-export class RelatorioTabelaComponent {
+export class RelatorioTabelaComponent implements OnInit, OnChanges {
   @Input() chamados: Chamado[] = [];
+  
+  // --- NOVO: Evento para avisar o pai que uma linha foi clicada ---
+  @Output() rowClick = new EventEmitter<Chamado>();
 
   // Propriedades para ordenação
   campoOrdenacao: string = '';
@@ -26,6 +29,11 @@ export class RelatorioTabelaComponent {
     if (this.campoOrdenacao) {
       this.aplicarOrdenacao();
     }
+  }
+
+  // --- NOVO: Método disparado pelo HTML ---
+  onRowClick(chamado: Chamado): void {
+    this.rowClick.emit(chamado);
   }
 
   // Métodos de ordenação
@@ -87,72 +95,49 @@ export class RelatorioTabelaComponent {
   // Métodos de formatação
   getStatusClass(status: string): string {
     switch (status) {
-      case 'aberto':
-        return 'status-aberto';
-      case 'em-andamento':
-        return 'status-andamento';
-      case 'fechado':
-        return 'status-fechado';
-      default:
-        return '';
+      case 'aberto': return 'status-aberto';
+      case 'em-andamento': return 'status-andamento';
+      case 'fechado': return 'status-fechado';
+      default: return '';
     }
   }
 
   getStatusLabel(status: string): string {
     switch (status) {
-      case 'aberto':
-        return 'Aberto';
-      case 'em-andamento':
-        return 'Em Andamento';
-      case 'fechado':
-        return 'Fechado';
-      default:
-        return status;
+      case 'aberto': return 'Aberto';
+      case 'em-andamento': return 'Em Andamento';
+      case 'fechado': return 'Fechado';
+      default: return status;
     }
   }
 
   getPrioridadeClass(prioridade: string): string {
     switch (prioridade) {
-      case 'urgente':
-        return 'priority-urgent';
-      case 'alta':
-        return 'priority-alta';
-      case 'media':
-        return 'priority-media';
-      case 'baixa':
-        return 'priority-baixa';
-      default:
-        return '';
+      case 'urgente': return 'priority-urgent';
+      case 'alta': return 'priority-alta';
+      case 'media': return 'priority-media';
+      case 'baixa': return 'priority-baixa';
+      default: return '';
     }
   }
 
   getPrioridadeIcon(prioridade: string): string {
     switch (prioridade) {
-      case 'baixa':
-        return '⬇️';
-      case 'media':
-        return '➡️';
-      case 'alta':
-        return '⬆️';
-      case 'urgente':
-        return '🚨';
-      default:
-        return '';
+      case 'baixa': return '⬇️';
+      case 'media': return '➡️';
+      case 'alta': return '⬆️';
+      case 'urgente': return '🚨';
+      default: return '';
     }
   }
 
   getPrioridadeLabel(prioridade: string): string {
     switch (prioridade) {
-      case 'baixa':
-        return 'Baixa';
-      case 'media':
-        return 'Média';
-      case 'alta':
-        return 'Alta';
-      case 'urgente':
-        return 'Urgente';
-      default:
-        return prioridade;
+      case 'baixa': return 'Baixa';
+      case 'media': return 'Média';
+      case 'alta': return 'Alta';
+      case 'urgente': return 'Urgente';
+      default: return prioridade;
     }
   }
 
@@ -176,15 +161,16 @@ export class RelatorioTabelaComponent {
       .substring(0, 2);
   }
 
-  // Métodos de ação
+  // Métodos de ação (apenas log por enquanto, pois o clique na linha fará a ação principal)
   visualizarChamado(chamado: Chamado): void {
     console.log('Visualizar chamado:', chamado);
-    // Implementar lógica de visualização
+    this.onRowClick(chamado); // Também abre o detalhe
   }
 
   editarChamado(chamado: Chamado): void {
     console.log('Editar chamado:', chamado);
-    // Implementar lógica de edição
+    // Nota: A lógica de abrir modal de edição geralmente fica no pai, 
+    // mas aqui estamos apenas logando.
   }
 
   exportarCSV(): void {
@@ -228,9 +214,7 @@ export class RelatorioTabelaComponent {
     window.print();
   }
 
-  // TrackBy para performance
   trackByChamado(index: number, chamado: Chamado): string {
     return chamado.numeroProtocolo;
   }
 }
-

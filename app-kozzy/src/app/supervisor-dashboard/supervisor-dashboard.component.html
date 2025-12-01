@@ -1,7 +1,7 @@
 <div class="app-container">
   <aside class="sidebar" [class.collapsed]="menuCollapsed">
     <div class="logo-section">
-      <div class.="logo-content" [class.hidden]="menuCollapsed">
+      <div class="logo-content" [class.hidden]="menuCollapsed">
         <div class="logo-wrapper">
           <div class="logo-icon"><span>K</span></div>
           <div class="logo-text"><h1>KOZZY</h1><p>Distribuidora</p></div>
@@ -11,19 +11,33 @@
     <nav class="navigation">
       <ul class="menu-list">
         <li *ngFor="let item of menuItems">
-          <ng-container *ngIf="item.action"><button (click)="item.action()" class="menu-item" [class.active]="item.active"><span class="menu-icon">{{ item.icon }}</span><span class="menu-label" [class.hidden]="menuCollapsed">{{ item.label }}</span></button></ng-container>
-          <ng-container *ngIf="item.route"><a [routerLink]="item.route" routerLinkActive="active" class="menu-item"><span class="menu-icon">{{ item.icon }}</span><span class="menu-label" [class.hidden]="menuCollapsed">{{ item.label }}</span><span *ngIf="item.badge && !menuCollapsed" class="menu-badge">{{ item.badge }}</span></a></ng-container>
+          <ng-container *ngIf="item.action">
+            <button (click)="item.action()" class="menu-item" [class.active]="item.active">
+              <span class="menu-icon">{{ item.icon }}</span>
+              <span class="menu-label" [class.hidden]="menuCollapsed">{{ item.label }}</span>
+            </button>
+          </ng-container>
+          <ng-container *ngIf="item.route">
+            <a [routerLink]="item.route" routerLinkActive="active" class="menu-item">
+              <span class="menu-icon">{{ item.icon }}</span>
+              <span class="menu-label" [class.hidden]="menuCollapsed">{{ item.label }}</span>
+            </a>
+          </ng-container>
         </li>
       </ul>
     </nav>
     <div class="user-section">
-      <div class="user-info" [class.hidden]="menuCollapsed" *ngIf="usuarioLogado"><div class="user-avatar"><span>{{ usuarioLogado.nome?.charAt(0)?.toUpperCase() }}</span></div><div class="user-details"><p class="user-name">{{ usuarioLogado.nome }}</p><p class="user-email">{{ usuarioLogado.email }}</p></div></div>
-      <button (click)="logout()" class="logout-btn" [class.collapsed]="menuCollapsed" title="Sair"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16,17 21,12 16,7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg><span [class.hidden]="menuCollapsed">Sair</span></button>
+      <div class="user-info" [class.hidden]="menuCollapsed" *ngIf="usuarioLogado">
+         <div class="user-avatar"><span>{{ usuarioLogado.nome?.charAt(0)?.toUpperCase() }}</span></div>
+         <div class="user-details"><p class="user-name">{{ usuarioLogado.nome }}</p><p class="user-email">{{ usuarioLogado.email }}</p></div>
+      </div>
+      <button (click)="logout()" class="logout-btn" [class.collapsed]="menuCollapsed" title="Sair"><span class="icon">↪</span><span [class.hidden]="menuCollapsed">Sair</span></button>
     </div>
   </aside>
 
   <main class="main-content">
-    <ng-container *ngIf="!showRelatorioScreen">
+    
+    <ng-container *ngIf="!showRelatorioScreen && !showDetailScreen">
       <header class="header">
         <div class="header-content">
           <div class="header-title"><h1>Visão Geral do Supervisor</h1><p>Monitoramento em tempo real dos chamados da equipe</p></div>
@@ -35,10 +49,7 @@
           <div class="stat-card" *ngFor="let kpi of kpis">
             <div class="stat-content">
               <div class="stat-icon" [class]="'stat-icon-' + kpi.color"><span>{{ kpi.icon }}</span></div>
-              <div class="stat-info">
-                <p class="stat-label">{{ kpi.label }}</p>
-                <p class="stat-value" [class]="'stat-value-' + kpi.color">{{ kpi.value }}</p>
-              </div>
+              <div class="stat-info"><p class="stat-label">{{ kpi.label }}</p><p class="stat-value" [class]="'stat-value-' + kpi.color">{{ kpi.value }}</p></div>
             </div>
           </div>
         </div>
@@ -55,9 +66,16 @@
         <div class="chamados-grid">
           <div *ngFor="let chamado of getChamadosFiltrados()" 
                class="chamado-card"
-               (click)="abrirModalEdicao(chamado)">
+               (click)="onSelectChamado(chamado)">
              <div class="card-header"><span class="card-number">#{{ chamado.numeroProtocolo }}</span><span class="status-badge" [class]="getStatusClass(chamado.status)">{{ getStatusLabel(chamado.status) }}</span></div>
-             <div class="card-content"><h3 class="card-title">{{ chamado.cliente }}</h3><p class="card-description">{{ chamado.descricao }}</p><div class="card-details"><div class="detail-item"><p class="detail-label">Atendente</p><p class="detail-value">{{ chamado.atendente }}</p></div><div class="detail-item"><p class="detail-label">Prioridade</p><p class="detail-value" [class]="getPrioridadeClass(chamado.prioridade)">{{ getPrioridadeLabel(chamado.prioridade) }}</p></div></div></div>
+             <div class="card-content">
+                <h3 class="card-title">{{ chamado.cliente }}</h3>
+                <p class="card-description">{{ chamado.descricao }}</p>
+                <div class="card-details">
+                    <div class="detail-item"><p class="detail-label">Departamento</p><p class="detail-value">{{ chamado.area || 'Geral' }}</p></div>
+                    <div class="detail-item"><p class="detail-label">Atendente</p><p class="detail-value">{{ chamado.atendente }}</p></div>
+                </div>
+             </div>
              <div class="card-footer"><span class="card-meta">📅 {{ formatarData(chamado.dataAbertura) }}</span><a class="details-btn">Ver detalhes →</a></div>
           </div>
         </div>
@@ -68,7 +86,20 @@
       </div>
     </ng-container>
 
-    <app-relatorio-screen *ngIf="showRelatorioScreen" [chamados]="relatorioChamados" (closeReportScreen)="fecharRelatorioScreen()"></app-relatorio-screen>
+    <app-ticket-detail
+        *ngIf="showDetailScreen && chamadoDetalhe"
+        [chamado]="chamadoDetalhe"
+        [usuarioLogado]="usuarioLogado"
+        (close)="fecharTelaDetalhes()"
+        (edit)="onEditarAPartirDoDetalhe($event)">
+    </app-ticket-detail>
+
+    <app-relatorio-screen 
+        *ngIf="showRelatorioScreen" 
+        [chamados]="relatorioChamados" 
+        (closeReportScreen)="fecharRelatorioScreen()"
+        (chamadoSelecionado)="onSelectChamado($event)"> </app-relatorio-screen>
+
   </main>
 </div>
 
@@ -90,9 +121,16 @@
 
 <app-relatorio-filtro-modal 
     [isVisible]="showRelatorioFiltrosModal" 
+    [filtrosSalvos]="null"
     (closeModal)="fecharModalRelatorioFiltros()" 
     (gerarRelatorioEvent)="onGerarRelatorio($event)">
 </app-relatorio-filtro-modal>
+
+<app-search-protocol-modal
+  [isVisible]="showSearchModal"
+  (close)="fecharModalBusca()"
+  (search)="onBuscarProtocolo($event)">
+</app-search-protocol-modal>
     
 <div class="toast-container" [class.show]="toast.visible" *ngIf="toast.visible">
   <div class="toast" [class]="'toast-' + toast.type">{{ toast.message }}</div>

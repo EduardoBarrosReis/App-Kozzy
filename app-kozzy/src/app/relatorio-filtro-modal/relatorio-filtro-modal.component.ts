@@ -8,12 +8,17 @@ import { RelatorioFilters } from '../chamados.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './relatorio-filtro-modal.component.html',
-  styleUrl: './relatorio-filtro-modal.component.css'
+  styleUrls: ['./relatorio-filtro-modal.component.css']
 })
 export class RelatorioFiltroModalComponent implements OnInit, OnChanges {
   @Input() isVisible: boolean = false;
-  @Input() filtrosSalvos: RelatorioFilters | null = null; // NOVA PROPRIEDADE PARA RECEBER FILTROS SALVOS
+  
+  // Mantivemos o nome original para compatibilidade
+  @Input() filtrosSalvos: RelatorioFilters | null = null; 
+  
   @Output() closeModal = new EventEmitter<void>();
+  
+  // IMPORTANTE: Nome voltado ao original para o Supervisor não quebrar
   @Output() gerarRelatorioEvent = new EventEmitter<RelatorioFilters>();
 
   filterForm: FormGroup;
@@ -30,16 +35,13 @@ export class RelatorioFiltroModalComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
-    // Carregar filtros salvos se existirem
     this.carregarFiltrosSalvos();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    // Quando o modal for aberto ou os filtros salvos mudarem, carregar os valores
     if (changes['isVisible'] && this.isVisible) {
       this.carregarFiltrosSalvos();
     }
-    
     if (changes['filtrosSalvos']) {
       this.carregarFiltrosSalvos();
     }
@@ -47,7 +49,6 @@ export class RelatorioFiltroModalComponent implements OnInit, OnChanges {
 
   private carregarFiltrosSalvos(): void {
     if (this.filtrosSalvos) {
-      // Preencher o formulário com os filtros salvos
       this.filterForm.patchValue({
         dataInicio: this.filtrosSalvos.dataInicio || '',
         dataFim: this.filtrosSalvos.dataFim || '',
@@ -69,6 +70,7 @@ export class RelatorioFiltroModalComponent implements OnInit, OnChanges {
     }
   }
 
+  // Este método é chamado pelo (ngSubmit) no HTML
   gerarRelatorio(): void {
     if (this.filterForm.valid) {
       const filtros: RelatorioFilters = {
@@ -80,14 +82,13 @@ export class RelatorioFiltroModalComponent implements OnInit, OnChanges {
         cliente: this.filterForm.value.cliente
       };
 
+      // Emite o evento com o nome correto
       this.gerarRelatorioEvent.emit(filtros);
     } else {
-      // Marcar todos os campos como tocados para mostrar erros de validação
       this.filterForm.markAllAsTouched();
     }
   }
 
-  // Métodos de validação
   hasFieldError(fieldName: string): boolean {
     const field = this.filterForm.get(fieldName);
     return !!(field && field.invalid && (field.dirty || field.touched));
@@ -95,34 +96,17 @@ export class RelatorioFiltroModalComponent implements OnInit, OnChanges {
 
   getFieldError(fieldName: string): string {
     const field = this.filterForm.get(fieldName);
-    if (field && field.errors) {
-      if (field.errors['required']) {
-        switch (fieldName) {
-          case 'dataInicio':
-            return 'Data de início é obrigatória';
-          case 'dataFim':
-            return 'Data de fim é obrigatória';
-          default:
-            return 'Este campo é obrigatório';
-        }
-      }
+    if (field && field.errors?.['required']) {
+      return 'Campo obrigatório';
     }
     return '';
   }
 
-  // Método para limpar apenas os filtros opcionais (manter as datas)
   limparFiltrosOpcionais(): void {
-    this.filterForm.patchValue({
-      status: '',
-      prioridade: '',
-      atendente: '',
-      cliente: ''
-    });
+    this.filterForm.patchValue({ status: '', prioridade: '', atendente: '', cliente: '' });
   }
 
-  // Método para limpar todos os filtros
   limparTodosFiltros(): void {
     this.filterForm.reset();
   }
 }
-
