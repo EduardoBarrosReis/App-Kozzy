@@ -1,11 +1,9 @@
-// src/app/criar-usuario-modal/criar-usuario-modal.component.ts (CÓDIGO COMPLETO)
-
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth.service';
 
-// Validador customizado para senhas
+// Validador customizado para senhas (mantido igual)
 export function senhasIguaisValidator(control: AbstractControl): ValidationErrors | null {
   const senha = control.get('senha');
   const confirmarSenha = control.get('confirmarSenha');
@@ -26,7 +24,7 @@ export function senhasIguaisValidator(control: AbstractControl): ValidationError
 export class CriarUsuarioModalComponent implements OnInit {
   @Input() isVisible: boolean = false;
   @Output() closeModal = new EventEmitter<void>();
-  @Output() usuarioCriado = new EventEmitter<string>(); // Emite a mensagem de sucesso
+  @Output() usuarioCriado = new EventEmitter<string>();
 
   criarUsuarioForm!: FormGroup;
 
@@ -48,13 +46,33 @@ export class CriarUsuarioModalComponent implements OnInit {
   onSubmit(): void {
     if (this.criarUsuarioForm.valid) {
       const { nome, email, perfil, senha } = this.criarUsuarioForm.value;
-      const resultado = this.authService.criarUsuario({ nome, email, perfil, password: senha });
+
+      // O objeto que passamos aqui deve combinar com o que o AuthService espera
+      const dadosNovoUsuario = {
+        nome,
+        email,
+        perfil,
+        password: senha // Mapeamos 'senha' do form para 'password' que o service espera
+      };
+
+      // --- MUDANÇA PRINCIPAL AQUI ---
+      this.authService.criarUsuario(dadosNovoUsuario).subscribe({
+        next: (response) => {
+          // Sucesso: Backend retornou 201 Created
+          const msg = response.message || 'Usuário criado com sucesso!';
+          
+          this.usuarioCriado.emit(msg);
+          this.criarUsuarioForm.reset(); // Limpa o formulário
+          this.onClose(); // Fecha o modal
+        },
+        error: (err) => {
+          // Erro: Backend retornou 400 ou 500 (Ex: Email já existe)
+          console.error('Erro ao criar usuário:', err);
+          const msgErro = err.error?.message || 'Erro ao criar usuário.';
+          alert(msgErro);
+        }
+      });
       
-      if (resultado.sucesso) {
-        this.usuarioCriado.emit(resultado.mensagem);
-      } else {
-        alert(resultado.mensagem); // Mostra erro se o usuário já existir
-      }
     } else {
       this.criarUsuarioForm.markAllAsTouched();
     }
@@ -62,5 +80,7 @@ export class CriarUsuarioModalComponent implements OnInit {
 
   onClose(): void {
     this.closeModal.emit();
+    // Opcional: Resetar o form ao fechar se quiser limpar dados não salvos
+    // this.criarUsuarioForm.reset(); 
   }
 }

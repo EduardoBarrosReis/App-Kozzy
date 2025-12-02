@@ -14,13 +14,12 @@ const AtendimentoSchema = new mongoose.Schema({
   categoriaAssunto: {
     type: String,
     enum: [
-      "Suporte Técnico",
-      "Problemas de Entrega",
-      "Questões de Pagamento",
-      "Cadastro/Dados",
-      "Comercial/Vendas",
-      "Financeiro",
-      "Outros Assuntos"
+      "Logistica",
+      "Contas a Pagar",
+      "Contas a Receber",
+      "Compras",
+      "T.I",
+      "Comercial"
     ],
     required: true
   },

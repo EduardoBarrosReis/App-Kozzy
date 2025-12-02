@@ -1,120 +1,156 @@
-// src/app/auth.service.ts (CÓDIGO COMPLETO E ATUALIZADO)
-
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core'; // <--- Importar Inject e PLATFORM_ID
+import { isPlatformBrowser } from '@angular/common'; // <--- Importar isPlatformBrowser
 import { Router } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
-
-// Interface para definir os tipos de usuário na "base de dados"
-interface Usuario {
-  email: string;
-  password: string;
-  perfil: 'supervisor' | 'atendente';
-  nome: string;
-}
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 
 export interface UsuarioLogado {
+  id?: string;
   email: string;
   nome: string;
-  perfil: 'supervisor' | 'atendente';
-  loginTime: string;
+  perfil: 'supervisor' | 'atendente'; 
+  token?: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly USERS_STORAGE_KEY = 'kozzy_usuarios';
+  private readonly API_URL = 'http://localhost:3000/api/usuarios';
+  
   private usuarioLogadoSubject = new BehaviorSubject<UsuarioLogado | null>(null);
   public usuarioLogado$ = this.usuarioLogadoSubject.asObservable();
 
-  private usuarios: Usuario[] = [];
-
-  constructor(private router: Router) {
-    this.carregarUsuarios();
+  // Injetamos o PLATFORM_ID para saber se estamos no servidor ou navegador
+  constructor(
+    private router: Router,
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) private platformId: Object 
+  ) {
     this.verificarUsuarioLogado();
   }
 
-  // ADICIONE ESTE NOVO MÉTODO
-  getTodosUsuarios(): Usuario[] {
-    // Retorna uma cópia da lista de usuários
-    return [...this.usuarios];
-  }
+  // --- LOGIN ---
+  login(email: string, password: string, rememberMe: boolean = false): Observable<any> {
+    const payload = { email, senha: password };
 
-  // --- O RESTO DO SEU SERVIÇO CONTINUA IGUAL ---
-  private carregarUsuarios(): void {
-    const usuariosSalvos = localStorage.getItem(this.USERS_STORAGE_KEY);
-    if (usuariosSalvos) { this.usuarios = JSON.parse(usuariosSalvos); } 
-    else {
-      this.usuarios = [
-        { email: 'supervisor', password: '123', perfil: 'supervisor', nome: 'Admin Supervisor' },
-        { email: 'teste', password: '123', perfil: 'atendente', nome: 'Usuário Teste' },
-        { email: 'admin@kozzy.com', password: 'admin123', perfil: 'supervisor', nome: 'Administrador Kozzy' },
-        { email: 'atendente@kozzy.com', password: 'atendente123', perfil: 'atendente', nome: 'Atendente Kozzy' }
-      ];
-      this.salvarUsuarios();
-    }
-  }
+    return this.http.post<any>(`${this.API_URL}/login`, payload, { withCredentials: true }).pipe(
+      tap(response => {
+        const usuarioBack = response.usuario;
+        
+        const usuarioFormatado: UsuarioLogado = {
+          id: usuarioBack.id,
+          email: usuarioBack.email,
+          nome: usuarioBack.nomeCompleto,
+          perfil: usuarioBack.perfilAcesso,
+          token: response.token
+        };
 
-  // Salva a lista de usuários no localStorage
-  private salvarUsuarios(): void {
-    localStorage.setItem(this.USERS_STORAGE_KEY, JSON.stringify(this.usuarios));
-  }
-
-  // NOVO MÉTODO: Criar um novo usuário
-  criarUsuario(novoUsuario: Omit<Usuario, 'email'> & { email: string }): { sucesso: boolean, mensagem: string } {
-    const usuarioExistente = this.usuarios.find(u => u.email.toLowerCase() === novoUsuario.email.toLowerCase());
-    if (usuarioExistente) {
-      return { sucesso: false, mensagem: 'Este e-mail ou nome de usuário já está em uso.' };
-    }
-
-    this.usuarios.push(novoUsuario);
-    this.salvarUsuarios(); // Persiste a nova lista de usuários
-    return { sucesso: true, mensagem: 'Usuário criado com sucesso!' };
-  }
-  
-  // NOVO MÉTODO: Recuperar senha de um usuário (simulação)
-  recuperarSenha(email: string): string | null {
-    const usuario = this.usuarios.find(u => u.email.toLowerCase() === email.toLowerCase());
-    return usuario ? usuario.password : null;
-  }
-
-  // Método de login (sem alterações na lógica interna)
-  login(email: string, password: string, rememberMe: boolean = false): boolean {
-    const usuarioEncontrado = this.usuarios.find(
-      user => user.email === email && user.password === password
+        this.definirSessao(usuarioFormatado, rememberMe);
+      })
     );
-
-    if (usuarioEncontrado) {
-      const usuarioLogado: UsuarioLogado = {
-        email: usuarioEncontrado.email,
-        nome: usuarioEncontrado.nome,
-        perfil: usuarioEncontrado.perfil,
-        loginTime: new Date().toISOString()
-      };
-      const storage = rememberMe ? localStorage : sessionStorage;
-      storage.setItem('usuario', JSON.stringify(usuarioLogado));
-      this.usuarioLogadoSubject.next(usuarioLogado);
-      this.redirecionarPorPerfil(usuarioEncontrado.perfil);
-      return true;
-    }
-    return false;
   }
 
-  // Método de logout (sem alterações)
+  // --- LOGOUT ---
   logout(): void {
-    localStorage.removeItem('usuario');
-    sessionStorage.removeItem('usuario');
-    this.usuarioLogadoSubject.next(null);
+    // Tenta chamar o back apenas se estiver no navegador (embora http funcione no server, o cookie é browser)
+    if (isPlatformBrowser(this.platformId)) {
+        this.http.post(`${this.API_URL}/logout`, {}, { withCredentials: true }).subscribe();
+        this.limparSessaoLocal();
+    }
+    
     this.router.navigate(['/login']);
   }
+
+  // --- GET USUÁRIOS ---
+  getTodosUsuarios(): Observable<any[]> {
+    return this.http.get<any[]>(this.API_URL, { withCredentials: true }).pipe(
+      map(listaDoBackend => {
+        return listaDoBackend.map(u => ({
+          id: u._id,
+          nome: u.nomeCompleto,
+          email: u.email,
+          perfil: u.perfilAcesso
+        }));
+      })
+    );
+  }
+
+  // --- CRIAR USUÁRIO ---
+  criarUsuario(dados: any): Observable<any> {
+    const payload = {
+      nomeCompleto: dados.nome,
+      email: dados.email,
+      senha: dados.password,
+      perfilAcesso: dados.perfil
+    };
+    return this.http.post(`${this.API_URL}/register`, payload);
+  }
+
+  recuperarSenha(email: string): Observable<any> {
+    return throwError(() => new Error('Funcionalidade de recuperação de senha ainda não implementada no servidor.'));
+  }
+
+  // =========================================================================
+  // MÉTODOS AUXILIARES (PROTEGIDOS COM isPlatformBrowser)
+  // =========================================================================
+
+  private definirSessao(usuario: UsuarioLogado, rememberMe: boolean): void {
+    this.usuarioLogadoSubject.next(usuario);
+    
+    // SÓ ACESSA LOCALSTORAGE SE FOR NAVEGADOR
+    if (isPlatformBrowser(this.platformId)) {
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem('usuario', JSON.stringify(usuario));
+    }
+  }
+
+  private limparSessaoLocal(): void {
+    this.usuarioLogadoSubject.next(null);
+
+    // SÓ ACESSA LOCALSTORAGE SE FOR NAVEGADOR
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem('usuario');
+      sessionStorage.removeItem('usuario');
+    }
+  }
+
+  private verificarUsuarioLogado(): void {
+    // SÓ ACESSA LOCALSTORAGE SE FOR NAVEGADOR
+    if (isPlatformBrowser(this.platformId)) {
+      const uL = localStorage.getItem('usuario');
+      const uS = sessionStorage.getItem('usuario');
+      
+      if (uL) {
+        this.usuarioLogadoSubject.next(JSON.parse(uL));
+      } else if (uS) {
+        this.usuarioLogadoSubject.next(JSON.parse(uS));
+      }
+    }
+  }
+
+  isLogado(): boolean { 
+    return this.usuarioLogadoSubject.value !== null; 
+  }
   
-  // Demais métodos (isLogado, getUsuarioLogado, etc.) permanecem os mesmos
-  isLogado(): boolean { return this.usuarioLogadoSubject.value !== null; }
-  getUsuarioLogado(): UsuarioLogado | null { return this.usuarioLogadoSubject.value; }
-  isSupervisor(): boolean { return this.getUsuarioLogado()?.perfil === 'supervisor' || false; }
-  isAtendente(): boolean { return this.getUsuarioLogado()?.perfil === 'atendente' || false; }
-  private redirecionarPorPerfil(perfil: 'supervisor' | 'atendente'): void { if (perfil === 'supervisor') { this.router.navigate(['/supervisor']); } else { this.router.navigate(['/central']); } }
-  private verificarUsuarioLogado(): void { const uL = localStorage.getItem('usuario'); const uS = sessionStorage.getItem('usuario'); if (uL) { this.usuarioLogadoSubject.next(JSON.parse(uL)); } else if (uS) { this.usuarioLogadoSubject.next(JSON.parse(uS)); } }
-  canAccessSupervisorRoute(): boolean { return this.isLogado() && this.isSupervisor(); }
-  canAccessAtendenteRoute(): boolean { return this.isLogado() && (this.isSupervisor() || this.isAtendente()); }
+  getUsuarioLogado(): UsuarioLogado | null { 
+    return this.usuarioLogadoSubject.value; 
+  }
+  
+  isSupervisor(): boolean { 
+    return this.getUsuarioLogado()?.perfil === 'supervisor'; 
+  }
+  
+  isAtendente(): boolean { 
+    return this.getUsuarioLogado()?.perfil === 'atendente'; 
+  }
+
+  canAccessSupervisorRoute(): boolean { 
+    return this.isLogado() && this.isSupervisor(); 
+  }
+  
+  canAccessAtendenteRoute(): boolean { 
+    return this.isLogado() && (this.isSupervisor() || this.isAtendente()); 
+  }
 }

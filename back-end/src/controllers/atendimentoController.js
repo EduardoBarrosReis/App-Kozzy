@@ -11,6 +11,7 @@ export const criarAtendimento = async (req, res) => {
     await novoAtendimento.save();
     res.status(201).json(novoAtendimento);
   } catch (error) {
+    console.error("❌ ERRO AO SALVAR NO MONGO:", error);
     res.status(500).json({ message: "Erro ao criar atendimento", error });
   }
 };
@@ -25,9 +26,7 @@ export const listarAtendimentos = async (req, res) => {
 
     // Se o usuário não tiver áreas cadastradas
     if (!areasUsuario) {
-      return res
-        .status(403)
-        .json({ message: "Usuário não possui áreas de acesso definidas" });
+        return res.json([]);
     }
 
     // Buscar atendimentos apenas das áreas que o usuário pode ver

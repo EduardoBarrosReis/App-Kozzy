@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ChamadosService, Chamado, NovoChamado } from '../chamados.service';
+import { Chamado, NovoChamado } from '../chamados.service'; // Removi ChamadosService pois o modal apenas emite dados
 import { AuthService } from '../auth.service';
 
 interface SelectOption { value: string; label: string; }
@@ -28,37 +28,47 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
   isLoading = false;
   showPreview = false;
 
-  // --- OPÇÕES DOS SELECTS ---
+  // --- OPÇÕES DOS SELECTS (Alinhados com o Backend Atendimento.js) ---
+  
+  // IMPORTANTE: Os 'values' aqui devem ser EXATAMENTE iguais ao enum do seu Mongoose
   areaOptions: SelectOption[] = [
-    { value: 'financeiro', label: '💰 Financeiro' },
-    { value: 'estoque', label: '📦 Estoque / Logística' },
-    { value: 'tecnico', label: '🔧 Suporte Técnico' },
-    { value: 'comercial', label: '📞 Comercial / Vendas' },
-    { value: 'rh', label: '👥 Recursos Humanos' },
-    { value: 'cadastro', label: '📝 Cadastro / Dados' },
-    { value: 'outros', label: '❓ Outros' }
+  { value: 'Logistica', label: '📦 Logística' },
+  { value: 'Contas a Pagar', label: '💸 Contas a Pagar' },
+  { value: 'Contas a Receber', label: '💵 Contas a Receber' },
+  { value: 'Compra', label: '🛒 Compras' },
+  { value: 'T.I', label: '💻 T.I' },
+  { value: 'Comercial', label: '📞 Comercial' }
   ];
 
+  // Assuntos continuam genéricos pois o backend agrupa tudo em "categoriaAssunto" (que é a Area)
+  // Mas mantemos aqui para detalhamento na descrição se necessário
   assuntoOptions: SelectOption[] = [
-    { value: 'duvida', label: 'Dúvida Geral' },
-    { value: 'reclamacao', label: 'Reclamação' },
-    { value: 'solicitacao', label: 'Solicitação de Serviço' },
-    { value: 'bug', label: 'Erro no Sistema' },
-    { value: 'troca', label: 'Troca/Devolução' }
+    { value: 'Dúvida Geral', label: 'Dúvida Geral' },
+    { value: 'Reclamação', label: 'Reclamação' },
+    { value: 'Solicitação de Serviço', label: 'Solicitação de Serviço' },
+    { value: 'Erro no Sistema', label: 'Erro no Sistema' },
+    { value: 'Troca/Devolução', label: 'Troca/Devolução' }
   ];
 
+  // Alinhado com enum: ["entregador","vendedor", "cliente","interno","supervisor","gerente"]
   clienteOptions: SelectOption[] = [
     { value: 'entregador', label: '🚴 Entregador' },
     { value: 'cliente', label: '👤 Cliente Final' },
-    { value: 'loja', label: '🏪 Loja/Estabelecimento' }
+    { value: 'vendedor', label: '🏪 Loja/Vendedor' },
+    { value: 'interno', label: '🏢 Interno' }
   ];
 
   atendenteOptions: SelectOption[] = [];
-  prioridadeOptions: SelectOption[] = [ { value: 'baixa', label: '🟢 Baixa' }, { value: 'media', label: '🟡 Média' }, { value: 'alta', label: '🟠 Alta' }, { value: 'urgente', label: '🔴 Urgente' } ];
+  
+  prioridadeOptions: SelectOption[] = [ 
+    { value: 'Baixa Prioridade', label: '🟢 Baixa' }, // Values ajustados para o Backend
+    { value: 'Média Prioridade', label: '🟡 Média' }, 
+    { value: 'Alta Prioridade', label: '🟠 Alta' }, 
+    { value: 'Urgente', label: '🔴 Urgente' } 
+  ];
 
   constructor(
     private fb: FormBuilder,
-    private chamadosService: ChamadosService,
     private authService: AuthService
   ) {}
 
@@ -67,8 +77,18 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
     this.carregarAtendentes();
   }
 
+  // --- CARREGAMENTO REAL DE USUÁRIOS ---
   carregarAtendentes() {
-    this.atendenteOptions = this.authService.getTodosUsuarios().map(u => ({ value: u.nome, label: u.nome }));
+    // Agora usamos .subscribe() pois getTodosUsuarios() vai no backend buscar a lista
+    this.authService.getTodosUsuarios().subscribe({
+      next: (usuarios) => {
+        this.atendenteOptions = usuarios.map(u => ({ 
+          value: u.nome, // ou u.id se preferir salvar o ID
+          label: u.nome 
+        }));
+      },
+      error: (err) => console.error('Erro ao carregar atendentes:', err)
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -78,8 +98,7 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
       if (this.isEditMode) {
         this.checkPermissionsAndPopulate();
       } else {
-        // Modo Criação: Supervisor pode definir atendente/prioridade logo de cara?
-        // Se sim, habilita aqui também:
+        // Lógica para Supervisor na criação
         if (this.perfilUsuario === 'supervisor') {
             this.ticketForm.get('atendente')?.enable();
             this.ticketForm.get('prioridade')?.enable();
@@ -87,31 +106,29 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
       }
     }
   }
-checkPermissionsAndPopulate(): void {
-    // 1. Preenche os dados
+
+  checkPermissionsAndPopulate(): void {
     this.populateFormForEdit();
 
-    // 2. Aplica a Regra de Negócio do Supervisor
     if (this.perfilUsuario === 'supervisor') {
-      // Supervisor: Pode mudar Atendente e Prioridade
       this.ticketForm.get('atendente')?.enable();
       this.ticketForm.get('prioridade')?.enable();
     } else {
-      // Atendente: Esses campos ficam travados (disabled)
       this.ticketForm.get('atendente')?.disable();
       this.ticketForm.get('prioridade')?.disable();
     }
   }
+
   initializeForm() {
     const protocoloValidators = this.isEditMode ? [Validators.required] : [];
     
     this.ticketForm = this.fb.group({
       numeroProtocolo: [{ value: '', disabled: this.isEditMode }, protocoloValidators],
-      cliente: ['', Validators.required],
-      area: ['', Validators.required], // CAMPO AREA ADICIONADO
-      assunto: ['', Validators.required],
+      cliente: ['', Validators.required], // tipoCliente no back
+      area: ['', Validators.required],    // categoriaAssunto no back
+      assunto: ['', Validators.required], // Apenas visual/descritivo
       atendente: [{ value: '', disabled: true }], 
-      prioridade: [{ value: 'media', disabled: true }],
+      prioridade: [{ value: 'Média Prioridade', disabled: true }], // Default ajustado
       descricao: ['', Validators.maxLength(500)],
       data: [new Date().toISOString().split('T')[0]],
       hora: [new Date().toTimeString().slice(0, 5)]
@@ -126,15 +143,14 @@ checkPermissionsAndPopulate(): void {
   populateFormForEdit(): void {
     if (!this.chamadoParaEditar) return;
 
-    const findValue = (options: SelectOption[], val: string) => {
-      return options.find(opt => val === opt.label || val === opt.value || opt.label.includes(val))?.value || '';
-    };
+    // Helper simples para evitar null
+    const safeValue = (val: any) => val || '';
 
     this.ticketForm.patchValue({
       numeroProtocolo: this.chamadoParaEditar.numeroProtocolo,
-      cliente: findValue(this.clienteOptions, this.chamadoParaEditar.cliente),
-      area: findValue(this.areaOptions, this.chamadoParaEditar.area || ''), // Recupera Area
-      assunto: findValue(this.assuntoOptions, this.chamadoParaEditar.categoria),
+      cliente: safeValue(this.chamadoParaEditar.cliente),
+      area: safeValue(this.chamadoParaEditar.area), 
+      assunto: safeValue(this.chamadoParaEditar.categoria), // Se categoria for diferente de area
       atendente: this.chamadoParaEditar.atendente,
       prioridade: this.chamadoParaEditar.prioridade,
       descricao: this.chamadoParaEditar.descricao,
@@ -144,34 +160,40 @@ checkPermissionsAndPopulate(): void {
   }
 
   salvar() {
-    if (this.ticketForm.invalid) return; 
+    if (this.ticketForm.invalid) {
+        this.ticketForm.markAllAsTouched();
+        return; 
+    }
+
     this.isLoading = true;
+
+    // Simulação de delay apenas visual, o modal emite o evento e o Pai chama a API
     setTimeout(() => {
       const val = this.ticketForm.getRawValue();
       
-      const labelCliente = this.clienteOptions.find(o => o.value === val.cliente)?.label || val.cliente;
-      const labelArea = this.areaOptions.find(o => o.value === val.area)?.label || val.area;
-      const labelAssunto = this.assuntoOptions.find(o => o.value === val.assunto)?.label || val.assunto;
-
+      // Como ajustamos os 'values' das opções acima para baterem com o backend,
+      // não precisamos mais fazer .find().label. Enviamos o valor direto.
+      
       if (this.isEditMode && this.chamadoParaEditar) {
         const editado: Chamado = {
           ...this.chamadoParaEditar,
-          cliente: labelCliente,
-          area: labelArea, // Salva Area
-          categoria: labelAssunto,
+          cliente: val.cliente,
+          area: val.area,
+          categoria: val.area, // No seu back, categoriaAssunto é a Area
           atendente: val.atendente,
           prioridade: val.prioridade,
           descricao: val.descricao
         };
         this.chamadoAtualizado.emit(editado);
       } else {
+        // Estrutura para envio ao Backend
         const novo: NovoChamado = {
           numeroProtocolo: val.numeroProtocolo || undefined, 
-          cliente: labelCliente,
-          area: labelArea, // Salva Area
-          assunto: labelAssunto,
-          atendente: this.usuarioLogadoNome,
-          prioridade: 'media',
+          cliente: val.cliente,
+          area: val.area, 
+          assunto: val.assunto,
+          atendente: this.perfilUsuario === 'supervisor' && val.atendente ? val.atendente : this.usuarioLogadoNome,
+          prioridade: val.prioridade,
           status: 'aberto',
           descricao: val.descricao,
           data: val.data,
@@ -181,7 +203,7 @@ checkPermissionsAndPopulate(): void {
         this.chamadoCriado.emit(novo);
       }
       this.isLoading = false;
-    }, 1000);
+    }, 500);
   }
 
   close() { this.closeModal.emit(); }
@@ -190,7 +212,17 @@ checkPermissionsAndPopulate(): void {
   showPreviewHandler() { this.showPreview = true; }
   backToForm() { this.showPreview = false; }
   getPreviewData() { return this.ticketForm.getRawValue(); } 
-  hasFieldError(field: string): boolean { const control = this.ticketForm.get(field); return !!(control && control.invalid && (control.dirty || control.touched)); }
-  getFieldError(field: string): string { const control = this.ticketForm.get(field); if (control?.errors?.['required']) return 'Campo obrigatório'; return ''; }
+  
+  hasFieldError(field: string): boolean { 
+    const control = this.ticketForm.get(field); 
+    return !!(control && control.invalid && (control.dirty || control.touched)); 
+  }
+  
+  getFieldError(field: string): string { 
+    const control = this.ticketForm.get(field); 
+    if (control?.errors?.['required']) return 'Campo obrigatório'; 
+    return ''; 
+  }
+  
   salvarChamado() { this.salvar(); }
 }

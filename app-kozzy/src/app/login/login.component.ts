@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
-import { AuthService } from '../auth.service'; // Ajuste o caminho conforme necessário
+import { AuthService } from '../auth.service';
 
 @Component({
   selector: 'app-login',
@@ -28,14 +28,9 @@ export class LoginComponent implements OnInit {
       rememberMe: [false]
     });
 
-    // Verificar se já está logado e redirecionar
+    // Se já estiver logado (ex: atualizou a página), redireciona automaticamente
     if (this.authService.isLogado()) {
-      const usuario = this.authService.getUsuarioLogado();
-      if (usuario?.perfil === 'supervisor') {
-        this.router.navigate(['/supervisor']);
-      } else {
-        this.router.navigate(['/central']);
-      }
+      this.redirecionarUsuario();
     }
   }
 
@@ -47,25 +42,44 @@ export class LoginComponent implements OnInit {
     if (this.loginForm.valid) {
       const { email, password, rememberMe } = this.loginForm.value;
 
-      // Usar o serviço de autenticação para fazer login
-      const loginSucesso = this.authService.login(email, password, rememberMe);
+      // Chama o serviço de autenticação conectando com o Back-end
+      this.authService.login(email, password, rememberMe).subscribe({
+        next: () => {
+          // SUCESSO: O usuário já foi salvo no AuthService
+          const usuario = this.authService.getUsuarioLogado();
+          const nome = usuario?.nome || 'Usuário';
 
-      if (loginSucesso) {
-        const usuario = this.authService.getUsuarioLogado();
-        const mensagemSucesso = usuario?.perfil === 'supervisor' 
-          ? `Bem-vindo, ${usuario.nome}! Redirecionando para o Dashboard do Supervisor...`
-          : `Bem-vindo, ${usuario?.nome}! Redirecionando para a Central de Atendimento...`;
-        
-        alert(mensagemSucesso);
-        // O redirecionamento já é feito pelo AuthService
-      } else {
-        alert('Login e/ou senha inválidos.');
-      }
+          alert(`Bem-vindo, ${nome}! Login realizado com sucesso.`);
+          
+          this.redirecionarUsuario();
+        },
+        error: (err) => {
+          // ERRO: Tratamento caso a senha esteja errada ou servidor fora
+          console.error('Erro no login:', err);
+          
+          // Pega a mensagem que vem do seu backend (usuarioController.js)
+          // Ex: "Senha incorreta." ou "Usuário não encontrado."
+          const mensagemErro = err.error?.message || 'Falha no login. Verifique suas credenciais.';
+          
+          alert(mensagemErro);
+        }
+      });
+
     } else {
-      // Marca todos os campos como 'touched' para exibir mensagens de erro
+      // Exibe erros visuais nos inputs se o form for inválido
       this.loginForm.markAllAsTouched();
       alert('Por favor, preencha todos os campos corretamente.');
     }
   }
-}
 
+  // Método auxiliar para centralizar a lógica de redirecionamento
+  private redirecionarUsuario(): void {
+    const usuario = this.authService.getUsuarioLogado();
+    
+    if (usuario?.perfil === 'supervisor') {
+      this.router.navigate(['/supervisor']);
+    } else {
+      this.router.navigate(['/central']);
+    }
+  }
+}

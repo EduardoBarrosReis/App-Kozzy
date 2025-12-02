@@ -1,13 +1,12 @@
 import mongoose from "mongoose";
 
 const areaEnum = [
-  "Suporte Técnico",
-  "Problemas de Entrega",
-  "Questões de Pagamento",
-  "Cadastro/Dados",
-  "Comercial/Vendas",
-  "Financeiro",
-  "Outros Assuntos"
+  "Logistica",
+  "Contas a Pagar",
+  "Contas a Receber",
+  "Compras",
+  "T.I",
+  "Comercial"
 ];
 
 const areaSchema = new mongoose.Schema({
