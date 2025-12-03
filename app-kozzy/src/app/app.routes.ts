@@ -22,13 +22,6 @@ export const routes: Routes = [
     canActivate: [AtendenteGuard]
   },
   
-  {
-    path: 'design-system',
-    component: DesignSystemComponent,
-    // Se quiser proteger a rota, use o canActivate, senão, deixe livre para teste
-    // canActivate: [AtendenteGuard]
-  },
-  // Rota curinga para redirecionar para o login se a rota não for encontrada
   { path: '**', redirectTo: '/login' },
 
   
