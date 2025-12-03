@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Chamado, NovoChamado } from '../chamados.service'; // Removi ChamadosService pois o modal apenas emite dados
 import { AuthService } from '../auth.service';
-
+import { HttpClient } from '@angular/common/http';
 interface SelectOption { value: string; label: string; }
 
 @Component({
@@ -16,7 +16,7 @@ interface SelectOption { value: string; label: string; }
 export class CreateTicketModalComponent implements OnInit, OnChanges {
   @Input() isVisible: boolean = false;
   @Input() chamadoParaEditar?: Chamado | null;
-  @Input() perfilUsuario: 'supervisor' | 'atendente' = 'atendente';
+  @Input() perfilUsuario: string = 'atendente';
   @Input() usuarioLogadoNome: string = '';
 
   @Output() closeModal = new EventEmitter<void>();
@@ -69,12 +69,14 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
 
   constructor(
     private fb: FormBuilder,
-    private authService: AuthService
+    private authService: AuthService,
+    private http: HttpClient
   ) {}
 
   ngOnInit() {
     this.initializeForm();
     this.carregarAtendentes();
+    this.filtrarAreasPermitidas();
   }
 
   // --- CARREGAMENTO REAL DE USUÁRIOS ---
@@ -90,23 +92,71 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
       error: (err) => console.error('Erro ao carregar atendentes:', err)
     });
   }
+filtrarAreasPermitidas() {
+  // Se for supervisor, mantém todas as opções. Se for atendente, busca as dele.
+  if (this.perfilUsuario === 'supervisor') return;
 
+  const usuario = this.authService.getUsuarioLogado();
+  if (!usuario || !usuario.id) return;
+
+  // Chama o endpoint que você me mostrou: areaController.buscarAreasPorUsuario
+  this.http.get<any>(`http://localhost:3000/api/areas/${usuario.id}`).subscribe({
+    next: (res) => {
+      if (res && res.areas && res.areas.length > 0) {
+        // Filtra a lista 'areaOptions' para mostrar APENAS o que veio do banco
+        this.areaOptions = this.areaOptions.filter(opt => res.areas.includes(opt.value));
+        
+        // Se sobrou só uma área, já seleciona ela automaticamente
+        if (this.areaOptions.length === 1) {
+          this.ticketForm.patchValue({ area: this.areaOptions[0].value });
+        }
+      }
+    },
+    error: (err) => console.log('Usuário sem restrição de área ou erro ao buscar.')
+  });
+}
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isVisible'] && this.isVisible) {
       this.isEditMode = !!this.chamadoParaEditar;
-      this.initializeForm();
+      this.initializeForm(); // Recria o form limpo
+      
+      // APLICA FILTRO DE ÁREA
+      this.aplicarRestricaoDeArea(); 
+
       if (this.isEditMode) {
-        this.checkPermissionsAndPopulate();
-      } else {
-        // Lógica para Supervisor na criação
-        if (this.perfilUsuario === 'supervisor') {
-            this.ticketForm.get('atendente')?.enable();
-            this.ticketForm.get('prioridade')?.enable();
-        }
-      }
+        this.populateFormForEdit();
+        this.checkPermissionsAndPopulate(); // Trava campos de edição
+      } 
     }
   }
+aplicarRestricaoDeArea() {
+    // 1. Pega usuário atualizado (já com as áreas do login)
+    const usuario = this.authService.getUsuarioLogado();
+    
+    // Se for Supervisor, vê tudo. Se não tiver usuário, não faz nada.
+    if (!usuario || usuario.perfil === 'supervisor') return;
 
+    // 2. Filtra as opções do Select
+    // Só deixa na lista as áreas que o usuário tem no array 'areas'
+    const areasPermitidas = usuario.areas || [];
+    
+    // Filtra visualmente o select
+    const opcoesFiltradas = this.areaOptions.filter(opt => 
+        areasPermitidas.includes(opt.value)
+    );
+
+    // Se o usuário tem área mas nenhuma bate com as opções do sistema, alerta
+    if (opcoesFiltradas.length === 0 && areasPermitidas.length > 0) {
+        console.warn('Usuário tem áreas, mas nenhuma corresponde às opções do sistema.');
+    } else if (opcoesFiltradas.length > 0) {
+        this.areaOptions = opcoesFiltradas;
+        
+        // Se sobrou só uma opção, já seleciona ela pra facilitar
+        if (this.areaOptions.length === 1) {
+            this.ticketForm.patchValue({ area: this.areaOptions[0].value });
+        }
+    }
+  }
   checkPermissionsAndPopulate(): void {
     this.populateFormForEdit();
 

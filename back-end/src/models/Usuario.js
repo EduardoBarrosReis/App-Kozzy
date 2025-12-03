@@ -22,7 +22,7 @@ const usuarioSchema = new mongoose.Schema({
   },
   perfilAcesso: {
     type: String,
-    enum: ["atendente", "supervisor"],
+    enum: ["atendente", "supervisor", "Logistica", "Contas a Pagar", "Contas a Receber", "Compras", "T.I", "Comercial"],
     required: true,
   },
 });

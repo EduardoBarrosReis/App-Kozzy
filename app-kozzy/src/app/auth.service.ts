@@ -9,8 +9,9 @@ export interface UsuarioLogado {
   id?: string;
   email: string;
   nome: string;
-  perfil: 'supervisor' | 'atendente'; 
+  perfil: string; 
   token?: string;
+  areas: string[]; // <--- NOVO CAMPO
 }
 
 @Injectable({
@@ -44,14 +45,17 @@ export class AuthService {
           email: usuarioBack.email,
           nome: usuarioBack.nomeCompleto,
           perfil: usuarioBack.perfilAcesso,
-          token: response.token
+          token: response.token,
+          areas: usuarioBack.areas || []
         };
 
         this.definirSessao(usuarioFormatado, rememberMe);
       })
     );
   }
-
+deletarUsuario(id: string): Observable<any> {
+    return this.http.delete(`${this.API_URL}/${id}`, { withCredentials: true });
+  }
   // --- LOGOUT ---
   logout(): void {
     // Tenta chamar o back apenas se estiver no navegador (embora http funcione no server, o cookie é browser)
@@ -143,14 +147,29 @@ export class AuthService {
   }
   
   isAtendente(): boolean { 
-    return this.getUsuarioLogado()?.perfil === 'atendente'; 
+    const p = this.getUsuarioLogado()?.perfil;
+    // Retorna true se existe um perfil e NÃO é supervisor
+    return !!p && p !== 'supervisor'; 
+  }
+
+  // Permite acesso se for supervisor OU qualquer outro perfil operacional
+  canAccessAtendenteRoute(): boolean { 
+    return this.isLogado(); // Qualquer logado pode acessar a rota básica
   }
 
   canAccessSupervisorRoute(): boolean { 
     return this.isLogado() && this.isSupervisor(); 
   }
-  
-  canAccessAtendenteRoute(): boolean { 
-    return this.isLogado() && (this.isSupervisor() || this.isAtendente()); 
+  getAreaDoUsuario(): string {
+    const usuario = this.getUsuarioLogado();
+    if (!usuario) return '';
+    
+    // Se o perfil for 'supervisor' ou 'atendente' (genérico), tenta pegar do array de areas
+    if (usuario.perfil === 'supervisor' || usuario.perfil === 'atendente') {
+        return usuario.areas && usuario.areas.length > 0 ? usuario.areas[0] : '';
+    }
+
+    // Se o perfil for 'logistica', 'financeiro', etc, O PRÓPRIO PERFIL É A ÁREA
+    return usuario.perfil; 
   }
 }

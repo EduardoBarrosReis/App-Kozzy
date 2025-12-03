@@ -6,8 +6,8 @@ import { Subscription } from 'rxjs';
 
 import { ChamadosService, Chamado, NovoChamado, RelatorioFilters } from '../chamados.service';
 import { AuthService, UsuarioLogado } from '../auth.service';
+import { LoadingService } from '../loading.service';
 
-// Seus componentes (mantidos iguais)
 import { CreateTicketModalComponent } from '../create-ticket-modal/create-ticket-modal.component';
 import { RelatorioFiltroModalComponent } from '../relatorio-filtro-modal/relatorio-filtro-modal.component';
 import { RelatorioScreenComponent } from '../relatorio-screen/relatorio-screen.component';
@@ -58,13 +58,16 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
   filtrosRelatorioSalvos: RelatorioFilters | null = null;
   toast: ToastMessage = { message: '', type: 'info', visible: false };
 
-  constructor(public chamadosService: ChamadosService, public authService: AuthService, private router: Router) {}
+  constructor(
+    public chamadosService: ChamadosService,
+    public authService: AuthService,
+    private router: Router,
+    private loadingService: LoadingService
+  ) {}
 
   ngOnInit(): void {
     this.usuarioLogado = this.authService.getUsuarioLogado();
-    
-    // --- MUDANÇA 1: Carregar dados da API ao iniciar ---
-    this.carregarListaDeChamados();
+    this.carregarDados();
 
     this.menuItems = [
       { label: 'Chamados', icon: '📞', action: () => this.voltarParaLista(), active: true, badge: 0 },
@@ -76,69 +79,136 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
     ];
   }
 
-  // --- NOVA FUNÇÃO PARA BUSCAR DO BACKEND ---
-  carregarListaDeChamados() {
-    this.chamadosService.getChamados().subscribe({
-      next: (dadosVindosDaApi) => {
-        this.chamados = dadosVindosDaApi;
+  ngOnDestroy(): void {
+    if (this.chamadosSubscription) { this.chamadosSubscription.unsubscribe(); }
+  }
+
+  carregarDados(): void {
+    this.loadingService.show();
+    this.chamadosSubscription = this.chamadosService.getChamados().subscribe({
+      next: (dados) => {
+        
+        // --- FILTRAGEM AUTOMÁTICA POR ÁREA/PERFIL ---
+        
+        // 1. Se for Supervisor, vê tudo
+        if (this.authService.isSupervisor()) {
+          this.chamados = dados;
+        } 
+        // 2. Se for outro perfil (Logística, Financeiro, etc)
+        else {
+          const areaDoUsuario = this.usuarioLogado?.perfil || '';
+          
+          // Caso especial: Se o perfil for 'atendente' genérico, tenta ver se tem área vinculada
+          // Se não, usa o próprio nome do perfil para filtrar a coluna 'area'
+          
+          this.chamados = dados.filter(c => {
+             // Normaliza strings para comparar (ignora maiúsculas e acentos se possível)
+             const areaChamado = c.area.toLowerCase();
+             const areaUser = areaDoUsuario.toLowerCase();
+             
+             // Se o usuário é 'atendente' genérico, talvez veja tudo ou nada (ajuste conforme sua regra)
+             if (areaUser === 'atendente') return true; 
+
+             // Verifica se a área do chamado contém o nome do perfil (Ex: "Logistica" bate com "Logistica")
+             return areaChamado.includes(areaUser);
+          });
+        }
+        // ---------------------------------------
+
         this.updateStatusCounts();
         this.updateMenuBadge();
+        this.loadingService.hide();
       },
-      error: (err) => {
-        console.error('Erro ao carregar chamados', err);
-        this.showToast('Erro ao carregar dados.', 'error');
+      error: (err: any) => {
+        // ... (erro mantido)
       }
     });
   }
 
-  ngOnDestroy(): void { if (this.chamadosSubscription) { this.chamadosSubscription.unsubscribe(); } }
+  // --- MÉTODOS COM A CORREÇÃO DE TIPO ---
 
-  // --- LÓGICA DE NAVEGAÇÃO ---
-  voltarParaLista(): void {
+  onChamadoCriado(n: NovoChamado) { 
+    this.loadingService.show();
+
+    // Agora o adicionarChamado retorna Observable, então .subscribe funciona
+    this.chamadosService.adicionarChamado(n).subscribe({
+      next: (res: any) => { 
+        this.fecharModal();
+        this.showToast('Chamado criado com sucesso!', 'success');
+        this.carregarDados();
+      },
+      error: (err: any) => { 
+        console.error(err);
+        this.showToast('Erro ao criar chamado.', 'error');
+        this.loadingService.hide();
+      }
+    });
+  }
+
+  onChamadoAtualizado(c: Chamado) { 
+    this.loadingService.show();
+
+    // Agora o atualizarChamado retorna Observable
+    this.chamadosService.atualizarChamado(c).subscribe({
+      next: (res: any) => { 
+        this.fecharModal();
+        this.showToast('Chamado atualizado com sucesso!', 'success');
+        
+        if (this.showDetailScreen && this.chamadoDetalhe?.id === c.id) {
+          this.chamadoDetalhe = c;
+        }
+        
+        this.carregarDados();
+      },
+      error: (err: any) => { 
+        console.error(err);
+        this.showToast('Erro ao atualizar chamado.', 'error');
+        this.loadingService.hide();
+      }
+    });
+  }
+
+  // --- OUTROS MÉTODOS (Navegação, Busca, etc) ---
+
+  voltarParaLista() {
     this.showDetailScreen = false;
     this.showRelatorioScreen = false;
     this.chamadoDetalhe = null;
     this.setFilter('todos');
-    // Opcional: recarregar a lista ao voltar
-    this.carregarListaDeChamados();
   }
 
-  onSelectChamado(chamado: Chamado): void {
+  onSelectChamado(chamado: Chamado) {
     this.chamadoDetalhe = chamado;
     this.showDetailScreen = true;
     this.showRelatorioScreen = false;
   }
 
-  fecharTelaDetalhes(): void {
+  fecharTelaDetalhes() {
     this.showDetailScreen = false;
     this.chamadoDetalhe = null;
   }
 
-  abrirModalRelatorios(): void {
+  abrirModalRelatorios() {
     this.showDetailScreen = false;
     this.showRelatorioScreen = false;
     this.relatorioChamados = [];
     this.showRelatorioFiltrosModal = true;
   }
 
-  // --- BUSCA ---
   abrirModalBuscaProtocolo() { this.showSearchModal = true; }
   fecharModalBusca() { this.showSearchModal = false; }
-  
-  onBuscarProtocolo(p: string) {
-    // Ajuste aqui se você criar uma rota de busca no backend depois
-    const encontrado = this.chamados.find(c => c.numeroProtocolo === p);
-    
-    if(encontrado) { 
-        this.showSearchModal=false; 
-        this.onSelectChamado(encontrado); 
-        this.showToast('Encontrado!', 'success'); 
-    } else { 
-        this.showToast('Protocolo não encontrado nesta lista.', 'warning'); 
+
+  onBuscarProtocolo(protocolo: string) {
+    const chamadoEncontrado = this.chamados.find(c => c.numeroProtocolo === protocolo);
+    if (chamadoEncontrado) {
+      this.showSearchModal = false;
+      this.onSelectChamado(chamadoEncontrado);
+      this.showToast('Chamado encontrado!', 'success');
+    } else {
+      this.showToast(`Protocolo #${protocolo} não encontrado.`, 'warning');
     }
   }
 
-  // --- EDIÇÃO ---
   onEditarAPartirDoDetalhe(chamado: Chamado) {
     if (this.usuarioLogado?.perfil === 'atendente' && chamado.atendente !== this.usuarioLogado.nome) {
       this.showToast('Você só pode editar seus próprios chamados.', 'error');
@@ -147,87 +217,81 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
     this.abrirModalEdicao(chamado);
   }
 
-  abrirModalEdicao(c: Chamado) { this.chamadoSelecionado = { ...c }; this.showCreateModal = true; }
-  
-  // --- MÉTODOS CRUD (CONECTADOS NA API) ---
-  abrirModalCriarChamado() { this.chamadoSelecionado = null; this.showCreateModal = true; }
-  fecharModal() { this.showCreateModal = false; this.chamadoSelecionado = null; }
+  abrirModalEdicao(chamado: Chamado) {
+    this.chamadoSelecionado = { ...chamado };
+    this.showCreateModal = true;
+  }
 
-  // --- MUDANÇA 2: Enviar para API via Service ---
-  onChamadoCriado(n: NovoChamado) { 
-    this.chamadosService.criarChamado(n).subscribe({
-        next: (res) => {
-            this.showToast('Chamado criado com sucesso!', 'success');
-            this.fecharModal();
-            // Atualiza a lista na tela com o novo item que veio do banco
-            this.carregarListaDeChamados();
-        },
-        error: (err) => {
-            console.error(err);
-            this.showToast('Erro ao salvar chamado.', 'error');
-        }
+  abrirModalCriarChamado() {
+    this.chamadoSelecionado = null;
+    this.showCreateModal = true;
+  }
+
+  fecharModal() {
+    this.showCreateModal = false;
+    this.chamadoSelecionado = null;
+  }
+
+  fecharModalRelatorioFiltros() { this.showRelatorioFiltrosModal = false; }
+  
+  onGerarRelatorio(filtros: RelatorioFilters) {
+    this.filtrosRelatorioSalvos = { ...filtros };
+    this.loadingService.show();
+    this.relatorioChamados = this.chamadosService.buscarChamadosPorFiltros(filtros);
+    this.loadingService.hide();
+    this.showRelatorioFiltrosModal = false;
+    setTimeout(() => { this.showRelatorioScreen = true; }, 100);
+  }
+
+  fecharRelatorioScreen() {
+    this.showRelatorioScreen = false;
+    this.relatorioChamados = [];
+  }
+  
+  reabrirModalFiltros() { this.showRelatorioFiltrosModal = true; }
+
+  toggleMenu() { this.menuCollapsed = !this.menuCollapsed; }
+  
+  updateStatusCounts() {
+    this.statusFilters.forEach((filter) => {
+      filter.count = filter.value === 'todos' 
+        ? this.chamados.length 
+        : this.chamados.filter((c) => c.status === filter.value).length;
     });
   }
 
-  onChamadoAtualizado(c: Chamado) { 
-      // Assumindo que você terá um método 'atualizarChamado' no service no futuro
-      // Por enquanto, vamos recarregar a lista para garantir sincronia
-      this.showToast('Funcionalidade de atualização em desenvolvimento no back.', 'info');
-      /* this.chamadosService.atualizarChamado(c).subscribe({
-        next: () => {
-           this.fecharModal();
-           this.carregarListaDeChamados();
-           this.showToast('Atualizado!', 'success');
-        }
-      });
-      */
+  updateMenuBadge() {
+    const chamadosItem = this.menuItems.find((item) => item.label === 'Chamados');
+    if (chamadosItem) {
+      chamadosItem.badge = this.chamados.filter((c) => c.status === 'aberto' || c.status === 'em-andamento').length;
+    }
   }
 
-  // --- RELATÓRIO ---
-  fecharModalRelatorioFiltros() { this.showRelatorioFiltrosModal = false; }
-  
-  onGerarRelatorio(f: RelatorioFilters) { 
-      // Nota: buscarChamadosPorFiltros tbm precisaria virar Observable se for filtrar no back
-      // Por enquanto mantemos filtragem local se a lista estiver carregada
-      this.filtrosRelatorioSalvos={...f}; 
-      // Lógica simplificada local:
-      this.relatorioChamados = this.chamados.filter(c => 
-          (!f.status || c.status === f.status) &&
-          (!f.dataInicio || c.data >= f.dataInicio)
-      );
-      this.showRelatorioFiltrosModal=false; 
-      setTimeout(()=>{this.showRelatorioScreen=true},100); 
+  setFilter(filterValue: string) {
+    this.currentFilter = filterValue;
+    this.statusFilters.forEach((filter) => (filter.active = filter.value === filterValue));
   }
-  
-  fecharRelatorioScreen() { this.showRelatorioScreen=false; this.relatorioChamados=[]; }
-  reabrirModalFiltros() { this.showRelatorioFiltrosModal=true; }
 
-  // --- UTILS ---
-  toggleMenu() { this.menuCollapsed = !this.menuCollapsed; }
-  
-  updateStatusCounts() { 
-      this.statusFilters.forEach(f => { 
-          f.count = f.value==='todos' ? this.chamados.length : this.chamados.filter(c=>c.status===f.value).length; 
-      }); 
+  getFilteredChamados() {
+    if (this.currentFilter === 'todos') return this.chamados;
+    return this.chamados.filter((chamado) => chamado.status === this.currentFilter);
+  }
+
+  getStatusLabel(status: string) { 
+    const l:any = { 'aberto': 'Aberto', 'em-andamento': 'Em Andamento', 'fechado': 'Fechado' }; 
+    return l[status] || status; 
   }
   
-  updateMenuBadge() { 
-      const i=this.menuItems.find(x=>x.label==='Chamados'); 
-      if(i) i.badge=this.chamados.filter(c=>['aberto','em-andamento'].includes(c.status)).length; 
+  formatDateTime(date: string, time: string) { return date + ' ' + time; }
+
+  showToast(message: string, type: 'success' | 'info' | 'warning' | 'error') {
+    this.toast = { message, type, visible: true };
+    setTimeout(() => { this.toast.visible = false; }, 3000);
   }
-  
-  setFilter(v: string) { this.currentFilter=v; this.statusFilters.forEach(f=>f.active=f.value===v); }
-  getFilteredChamados() { return this.currentFilter==='todos' ? this.chamados : this.chamados.filter(c=>c.status===this.currentFilter); }
-  getStatusLabel(s:string) { return s; } 
-  formatDateTime(d:string,t:string) { return d + ' ' + t; }
-  
-  showToast(message: string, type: any) { this.toast = { message, type, visible: true }; setTimeout(() => { this.toast.visible = false; }, 3000); }
-  
-  logout() { 
-      if(confirm('Sair?')) {
-          this.authService.logout(); 
-          // O authService.logout() já redireciona, mas se precisar forçar:
-          // this.router.navigate(['/login']);
-      }
+
+  logout() {
+    if (confirm('Tem certeza que deseja sair?')) {
+      this.authService.logout();
+    }
   }
 }

@@ -17,20 +17,16 @@ export class RelatorioScreenComponent {
 
   @Output() openFilterModal = new EventEmitter<void>();
   @Output() closeReportScreen = new EventEmitter<void>();
-  
-  // --- GARANTINDO QUE O OUTPUT EXISTA ---
   @Output() chamadoSelecionado = new EventEmitter<Chamado>();
 
-  // Helpers
   getStatusCount(status: string): number {
     return this.chamados.filter(chamado => chamado.status === status).length;
   }
 
-  // Métodos que seu HTML pode estar chamando
   onVoltar() { this.closeReportScreen.emit(); }
   onEditarFiltros() { this.openFilterModal.emit(); }
 
-   exportarRelatorio(): void {
+  exportarRelatorio(): void {
     if (!this.chamados || this.chamados.length === 0) {
       alert('Não há dados para exportar');
       return;
@@ -41,8 +37,11 @@ export class RelatorioScreenComponent {
       'Cliente': chamado.cliente.replace(/🚴|👤|🏪/g, '').trim(),
       'Área': chamado.area || 'N/A',
       'Status': this.getStatusLabel(chamado.status),
-      'Data': chamado.dataAbertura,
-      'Hora': chamado.horaAbertura,
+      
+      // --- MUDANÇA AQUI: Usando a função de formatar ---
+      'Data': this.formatarDataParaExcel(chamado.dataAbertura),
+      
+      'Hora': chamado.horaAbertura, // Se a hora já vier HH:mm do banco, pode manter
       'Prioridade': this.getPrioridadeLabel(chamado.prioridade),
       'Atendente': chamado.atendente,
       'Assunto': chamado.categoria,
@@ -51,7 +50,6 @@ export class RelatorioScreenComponent {
 
     const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(dadosParaPlanilha);
 
-    // Ajuste de colunas
     const objectMaxLength: number[] = [];
     for (let i = 0; i < dadosParaPlanilha.length; i++) {
       let value = Object.values(dadosParaPlanilha[i]);
@@ -69,6 +67,21 @@ export class RelatorioScreenComponent {
     XLSX.utils.book_append_sheet(wb, ws, 'Chamados');
 
     XLSX.writeFile(wb, `Relatorio_Chamados_${new Date().toISOString().split('T')[0]}.xlsx`);
+  }
+
+  // --- NOVA FUNÇÃO AUXILIAR PARA FORMATAR A DATA NO EXCEL ---
+  private formatarDataParaExcel(dataIso: string): string {
+    if (!dataIso) return '';
+    
+    // Tenta criar uma data a partir da string do banco
+    const data = new Date(dataIso);
+    
+    // Verifica se a data é válida
+    if (isNaN(data.getTime())) return dataIso;
+
+    // Retorna no formato brasileiro dd/mm/aaaa
+    // O 'UTC' ajuda a evitar que a data volte um dia dependendo do fuso
+    return data.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
   }
 
   private getStatusLabel(status: string): string {

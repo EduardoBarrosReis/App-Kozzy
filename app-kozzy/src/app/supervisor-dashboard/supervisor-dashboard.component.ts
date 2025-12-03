@@ -59,6 +59,10 @@ export class SupervisorDashboardComponent implements OnInit, OnDestroy {
   chamados: Chamado[] = [];
   private chamadosSubscription!: Subscription;
 
+  // --- NOVA VARIÁVEL: Controla qual tela aparece ---
+  viewMode: 'dashboard' | 'usuarios' = 'dashboard';
+  listaUsuarios: any[] = [];
+
   constructor(
     private router: Router, 
     public authService: AuthService,
@@ -68,10 +72,12 @@ export class SupervisorDashboardComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.usuarioLogado = this.authService.getUsuarioLogado();
     
+    // MENU CONFIGURADO CORRETAMENTE
     this.menuItems = [
-      { label: 'Visão Geral', icon: '👑', action: () => this.voltarParaDashboard(), active: true },
+      // Ao clicar aqui, ele chama mudarVista('dashboard') que volta para os chamados
+      { label: 'Visão Geral', icon: '👑', action: () => this.mudarVista('dashboard'), active: true },
+      { label: 'Gerenciar Equipe', icon: '👥', action: () => this.mudarVista('usuarios') },
       { label: 'Buscar Protocolo', icon: '🔍', action: () => this.abrirModalBuscaProtocolo() },
-      { label: 'Criar Usuário', icon: '👤', action: () => this.abrirModalCriarUsuario() },
       { label: 'Relatórios', icon: '📊', action: () => this.abrirModalRelatorios() },
       { label: 'Configurações', icon: '⚙️', route: '/configuracoes' },
     ];
@@ -90,42 +96,76 @@ export class SupervisorDashboardComponent implements OnInit, OnDestroy {
     window.removeEventListener('resize', this.checkScreenSize.bind(this)); 
   }
 
-  // --- LÓGICA DE TROCA DE TELA ---
-  
-  // 1. Reseta tudo para mostrar a Dashboard
-  voltarParaDashboard(): void {
-    this.showDetailScreen = false;
-    this.showRelatorioScreen = false;
-    this.chamadoDetalhe = null;
-    this.setFilter('status', 'todos');
+  // --- LÓGICA DE NAVEGAÇÃO DE VISTAS ---
+  mudarVista(modo: 'dashboard' | 'usuarios') {
+    this.viewMode = modo;
+    
+    // Atualiza o item ativo no menu
+    this.menuItems.forEach(i => {
+      i.active = (i.label === 'Visão Geral' && modo === 'dashboard') || 
+                 (i.label === 'Gerenciar Equipe' && modo === 'usuarios');
+    });
+
+    // Se mudou para dashboard, garante que detalhes e relatórios fechem
+    if (modo === 'dashboard') {
+        this.showDetailScreen = false;
+        this.showRelatorioScreen = false;
+        this.chamadoDetalhe = null;
+    }
+    
+    // Se mudou para usuários, carrega a lista
+    if (modo === 'usuarios') {
+      this.carregarUsuarios();
+    }
   }
 
-  // 2. Abre o Detalhe e ESCONDE o Relatório
+  carregarUsuarios() {
+    this.authService.getTodosUsuarios().subscribe({
+      next: (users) => this.listaUsuarios = users,
+      error: (err) => this.showToast('Erro ao carregar usuários', 'error')
+    });
+  }
+
+  excluirUsuario(usuario: any) {
+    if (usuario.id === this.usuarioLogado?.id) {
+      alert('Você não pode excluir a si mesmo!');
+      return;
+    }
+
+    if (confirm(`Tem certeza que deseja excluir ${usuario.nome}?`)) {
+      this.authService.deletarUsuario(usuario.id).subscribe({
+        next: () => {
+          this.showToast('Usuário excluído.', 'success');
+          this.carregarUsuarios(); 
+        },
+        error: (err) => {
+          console.error(err);
+          this.showToast('Erro ao excluir.', 'error');
+        }
+      });
+    }
+  }
+
+  // --- MÉTODOS EXISTENTES (Mantidos) ---
+  
   onSelectChamado(chamado: Chamado): void {
-    console.log('Selecionado:', chamado.numeroProtocolo); // Debug
     this.chamadoDetalhe = chamado;
     this.showDetailScreen = true;
-    
-    // CRUCIAL: Esconde o relatório para não sobrepor
-    this.showRelatorioScreen = false; 
+    this.showRelatorioScreen = false;
   }
 
   fecharTelaDetalhes(): void {
     this.showDetailScreen = false;
     this.chamadoDetalhe = null;
-    // Se quiser voltar para o relatório ao invés do dashboard, teria que guardar estado,
-    // mas por padrão volta para dashboard ou deixa o relatório visível se não setarmos false.
-    // Como setamos false no onSelectChamado, voltamos pro dashboard.
   }
 
   abrirModalRelatorios(): void { 
-    this.showDetailScreen = false; // Fecha detalhe se estiver aberto
+    this.showDetailScreen = false;
     this.showRelatorioScreen = false; 
     this.relatorioChamados = []; 
     this.showRelatorioFiltrosModal = true; 
   }
 
-  // ... (Outros métodos de busca e modal iguais aos anteriores)
   abrirModalBuscaProtocolo() { this.showSearchModal = true; }
   fecharModalBusca() { this.showSearchModal = false; }
   onBuscarProtocolo(p: string) {
@@ -142,7 +182,6 @@ export class SupervisorDashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Métodos CRUD
   abrirModalEdicao(c: Chamado) { this.chamadoSelecionado = { ...c }; this.showTicketModal = true; }
   fecharTicketModal() { this.showTicketModal = false; this.chamadoSelecionado = null; }
   
@@ -160,10 +199,16 @@ export class SupervisorDashboardComponent implements OnInit, OnDestroy {
     this.showToast('Criado com sucesso!', 'success');
   }
 
-  // Métodos auxiliares
   abrirModalCriarUsuario() { this.showCriarUsuarioModal = true; }
   fecharModalCriarUsuario() { this.showCriarUsuarioModal = false; }
-  onUsuarioCriado(msg: string) { this.showToast(msg, 'success'); this.fecharModalCriarUsuario(); }
+  
+  // Atualizado para recarregar lista se estiver nela
+  onUsuarioCriado(msg: string) { 
+      this.showToast(msg, 'success'); 
+      this.fecharModalCriarUsuario(); 
+      if (this.viewMode === 'usuarios') this.carregarUsuarios();
+  }
+  
   fecharModalRelatorioFiltros() { this.showRelatorioFiltrosModal = false; }
   onGerarRelatorio(filtros: RelatorioFilters) { 
       this.relatorioChamados = this.chamadosService.buscarChamadosPorFiltros(filtros); 
@@ -173,16 +218,15 @@ export class SupervisorDashboardComponent implements OnInit, OnDestroy {
   fecharRelatorioScreen() { this.showRelatorioScreen = false; this.relatorioChamados = []; }
   
   checkScreenSize() { this.menuCollapsed = window.innerWidth < 1024; }
-  logout() { if (confirm('Sair?')) this.authService.logout(); }
+  logout() { if (confirm('Tem certeza?')) { this.authService.logout(); } }
   showToast(message: string, type: any) { this.toast = { message, type, visible: true }; setTimeout(() => { this.toast.visible = false; }, 3000); }
   
-  // Getters/Formatters
   calcularKPIs() { const abertos = this.chamados.filter(c => c.status === 'aberto').length; const emAndamento = this.chamados.filter(c => c.status === 'em-andamento').length; const concluidos = this.chamados.filter(c => c.status === 'fechado').length; const urgentes = this.chamados.filter(c => c.prioridade === 'urgente' || c.prioridade === 'alta').length; this.kpis[0].value=abertos; this.kpis[1].value=emAndamento; this.kpis[2].value=concluidos; this.kpis[3].value=urgentes; }
   setFilter(key: any, value: any) { (this.filtros as any)[key] = value; }
   getChamadosFiltrados(): Chamado[] { let r = [...this.chamados]; if(this.filtros.busca.trim()){const b=this.filtros.busca.toLowerCase(); r=r.filter(c=>c.numeroProtocolo.toLowerCase().includes(b) || c.cliente.toLowerCase().includes(b) || c.descricao.toLowerCase().includes(b))} if(this.filtros.status!=='todos'){r=r.filter(c=>c.status===this.filtros.status)} return r; }
-  getStatusLabel(s: string) { const l:any={ 'aberto': 'Aberto', 'em-andamento': 'Em Andamento', 'fechado': 'Concluído' }; return l[s] || ''; }
-  getPrioridadeLabel(p: string) { const l:any={ 'baixa': 'Baixa', 'media': 'Média', 'alta': 'Alta', 'urgente': 'Urgente' }; return l[p] || ''; }
-  getPrioridadeClass(p: string) { const c:any={ 'alta': 'prioridade-alta', 'urgente': 'prioridade-alta', 'media': 'prioridade-media', 'baixa': 'prioridade-baixa' }; return c[p] || ''; }
+  getStatusLabel(s: string) { const labels: { [key: string]: string } = { 'aberto': 'Aberto', 'em-andamento': 'Em Andamento', 'fechado': 'Concluído' }; return labels[s] || ''; }
+  getPrioridadeLabel(p: string) { const labels: { [key: string]: string } = { 'baixa': 'Baixa', 'media': 'Média', 'alta': 'Alta', 'urgente': 'Urgente' }; return labels[p] || ''; }
+  getPrioridadeClass(p: string) { const classes: { [key: string]: string } = { 'alta': 'prioridade-alta', 'urgente': 'prioridade-alta', 'media': 'prioridade-media', 'baixa': 'prioridade-baixa' }; return classes[p] || ''; }
   getStatusClass(s:string){return`status-${s.replace('-','')}`}
   formatarData(d:any){return new Date(d).toLocaleDateString('pt-BR')}
 }

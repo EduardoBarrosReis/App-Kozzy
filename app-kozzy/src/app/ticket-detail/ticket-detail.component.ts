@@ -1,7 +1,7 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chamado } from '../chamados.service';
-import { UsuarioLogado } from '../auth.service'; // Importe a interface do usuário
+import { UsuarioLogado } from '../auth.service';
 
 @Component({
   selector: 'app-ticket-detail',
@@ -12,7 +12,7 @@ import { UsuarioLogado } from '../auth.service'; // Importe a interface do usuá
 })
 export class TicketDetailComponent {
   @Input() chamado!: Chamado;
-  @Input() usuarioLogado!: UsuarioLogado | null; // <--- RECEBE O USUÁRIO PARA VALIDAR
+  @Input() usuarioLogado!: UsuarioLogado | null;
   
   @Output() close = new EventEmitter<void>();
   @Output() edit = new EventEmitter<Chamado>();
@@ -21,37 +21,40 @@ export class TicketDetailComponent {
     this.close.emit();
   }
 
-  // --- TRAVA DE SEGURANÇA ---
+  // Lógica de verificação
   podeEditar(): boolean {
     if (!this.usuarioLogado || !this.chamado) return false;
 
-    // 1. Supervisor pode tudo
+    // 1. Supervisor: Pode tudo
     if (this.usuarioLogado.perfil === 'supervisor') return true;
 
-    // 2. Atendente só pode se o chamado for dele
-    if (this.usuarioLogado.perfil === 'atendente' && this.chamado.atendente === this.usuarioLogado.nome) {
-      return true;
-    }
+    // 2. Atendente:
+    // - Deve ser o dono do chamado (nome igual)
+    const nomeBate = this.usuarioLogado.nome.toLowerCase() === (this.chamado.atendente || '').toLowerCase();
+    
+    // - E deve ter a área do chamado nas suas permissões
+    const areasDoUsuario = this.usuarioLogado.areas || [];
+    const areaDoChamado = this.chamado.area;
+    const areaBate = areasDoUsuario.includes(areaDoChamado);
 
-    return false;
+    return this.usuarioLogado.perfil === 'atendente' && nomeBate && areaBate;
   }
 
   onEdit() {
     if (this.podeEditar()) {
       this.edit.emit(this.chamado);
     } else {
-      alert('⛔ Você não tem permissão para editar este chamado.');
+      let motivo = '';
+      if (this.usuarioLogado?.nome.toLowerCase() !== (this.chamado.atendente || '').toLowerCase()) {
+          motivo = 'Você não é o responsável por este chamado.';
+      } else {
+          motivo = 'Este chamado pertence a uma área que você não tem acesso.';
+      }
+      alert(`⛔ ACESSO NEGADO\n\n${motivo}`);
     }
   }
 
   // Helpers
-  getStatusLabel(status: string): string {
-    const map: any = { 'aberto': 'Aberto', 'em-andamento': 'Em Andamento', 'fechado': 'Fechado' };
-    return map[status] || status;
-  }
-
-  getPrioridadeLabel(prioridade: string): string {
-    const map: any = { 'baixa': 'Baixa', 'media': 'Média', 'alta': 'Alta', 'urgente': 'Urgente' };
-    return map[prioridade] || prioridade;
-  }
+  getStatusLabel(s: string) { const m:any={'aberto':'Aberto','em-andamento':'Em Andamento','fechado':'Fechado'}; return m[s]||s; }
+  getPrioridadeLabel(p: string) { const m:any={'baixa':'Baixa','media':'Média','alta':'Alta','urgente':'Urgente'}; return m[p]||p; }
 }

@@ -11,10 +11,7 @@
     </div>
     
     <div class="header-right">
-      <button class="btn-edit" 
-              (click)="onEdit()" 
-              [disabled]="!podeEditar()"
-              [title]="podeEditar() ? 'Editar Chamado' : 'Apenas o responsável ou supervisor pode editar'">
+      <button class="btn-edit" (click)="onEdit()">
         ✎ Editar Chamado
       </button>
     </div>
@@ -61,9 +58,9 @@
           </div>
           <div class="meta-row">
             <span class="meta-label">Criado em:</span>
-            <span class="meta-value">{{ chamado.dataAbertura }} às {{ chamado.horaAbertura }}</span>
+            <span class="meta-value">{{ chamado.dataAbertura | date: 'dd/MM/yyyy' }} às {{ chamado.horaAbertura }}</span>
           </div>
         </div>
       </div>
   </div>
-</div>
+</div>  

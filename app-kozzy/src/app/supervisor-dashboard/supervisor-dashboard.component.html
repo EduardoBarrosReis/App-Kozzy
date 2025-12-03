@@ -37,7 +37,7 @@
 
   <main class="main-content">
     
-    <ng-container *ngIf="!showRelatorioScreen && !showDetailScreen">
+    <ng-container *ngIf="viewMode === 'dashboard' && !showRelatorioScreen && !showDetailScreen">
       <header class="header">
         <div class="header-content">
           <div class="header-title"><h1>Visão Geral do Supervisor</h1><p>Monitoramento em tempo real dos chamados da equipe</p></div>
@@ -76,12 +76,68 @@
                     <div class="detail-item"><p class="detail-label">Atendente</p><p class="detail-value">{{ chamado.atendente }}</p></div>
                 </div>
              </div>
-             <div class="card-footer"><span class="card-meta">📅 {{ formatarData(chamado.dataAbertura) }}</span><a class="details-btn">Ver detalhes →</a></div>
+             <div class="card-footer"><span class="card-meta">📅 {{ chamado.dataAbertura | date: 'dd/MM/yyyy' }} às {{ chamado.horaAbertura }}</span><a class="details-btn">Ver detalhes →</a></div>
           </div>
         </div>
         
         <div *ngIf="getChamadosFiltrados().length === 0" class="empty-state">
             <div class="empty-icon">📥</div><h3>Nenhum chamado encontrado</h3><p>Não há chamados para exibir.</p>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="viewMode === 'usuarios'">
+      <header class="header">
+        <div class="header-content">
+          <div class="header-title-row" style="display: flex; align-items: center; gap: 15px;">
+            <button class="btn-back" (click)="mudarVista('dashboard')">← Voltar</button>
+            <div>
+                <h1>Gerenciar Equipe</h1>
+                <p>Controle de acesso e usuários do sistema</p>
+            </div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-primary" (click)="abrirModalCriarUsuario()">+ Novo Usuário</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="users-table-container" style="background: white; border-radius: 12px; padding: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="text-align: left; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">
+                <th style="padding: 16px 24px; font-size: 14px; color: #6b7280; font-weight: 600;">Nome</th>
+                <th style="padding: 16px 24px; font-size: 14px; color: #6b7280; font-weight: 600;">Email</th>
+                <th style="padding: 16px 24px; font-size: 14px; color: #6b7280; font-weight: 600;">Perfil / Área</th>
+                <th style="padding: 16px 24px; text-align: right; font-size: 14px; color: #6b7280; font-weight: 600;">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of listaUsuarios" style="border-bottom: 1px solid #f3f4f6; transition: background 0.2s;" class="user-row">
+                <td style="padding: 16px 24px; color: #111827; font-weight: 500;">{{ user.nome }}</td>
+                <td style="padding: 16px 24px; color: #4b5563;">{{ user.email }}</td>
+                <td style="padding: 16px 24px;">
+                  <span style="padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;"
+                        [style.background-color]="user.perfil === 'supervisor' ? '#e0e7ff' : '#f3f4f6'"
+                        [style.color]="user.perfil === 'supervisor' ? '#4338ca' : '#374151'">
+                    {{ user.perfil }}
+                  </span>
+                </td>
+                <td style="padding: 16px 24px; text-align: right;">
+                  <button (click)="excluirUsuario(user)" 
+                          style="background: #fee2e2; border: 1px solid #fecaca; color: #dc2626; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;"
+                          [disabled]="user.id === usuarioLogado?.id"
+                          title="Excluir Usuário">
+                    🗑️
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div *ngIf="listaUsuarios.length === 0" style="padding: 40px; text-align: center; color: #6b7280;">
+            Nenhum usuário encontrado.
+          </div>
         </div>
       </div>
     </ng-container>

@@ -64,7 +64,7 @@
                     <div class="detail-item"><span class="detail-label">Assunto</span><span class="detail-value">{{ chamado.categoria }}</span></div>
                     <div class="detail-item"><span class="detail-label">Atendente</span><span class="detail-value">{{ chamado.atendente }}</span></div>
                 </div>
-                <div class="card-footer"><span class="card-meta">📅 {{ formatDateTime(chamado.dataAbertura, chamado.horaAbertura) }}</span></div>
+                <div class="card-footer"><span class="card-meta">📅 {{ chamado.dataAbertura | date: 'dd/MM/yyyy' }} às {{ chamado.horaAbertura }}</span></div>
             </div>
             </div>
             <div class="empty-state" *ngIf="getFilteredChamados().length === 0"><div class="empty-icon">📭</div><h3>Nenhum chamado encontrado</h3></div>
@@ -75,8 +75,7 @@
     <app-ticket-detail
         *ngIf="showDetailScreen && chamadoDetalhe"
         [chamado]="chamadoDetalhe"
-        [usuarioLogado]="usuarioLogado"
-        (close)="fecharTelaDetalhes()"
+        [usuarioLogado]="usuarioLogado"  (close)="fecharTelaDetalhes()"
         (edit)="onEditarAPartirDoDetalhe($event)">
     </app-ticket-detail>
 

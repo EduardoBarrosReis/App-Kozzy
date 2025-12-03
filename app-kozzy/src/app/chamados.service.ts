@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, tap } from 'rxjs'; // Adicionei 'tap'
+import { map } from 'rxjs/operators';
 
-// Interface do Front (Modal)
+// Interfaces
 export interface NovoChamado {
   numeroProtocolo?: string;
   cliente: string;
@@ -18,7 +18,6 @@ export interface NovoChamado {
   dataHoraCriacao: string;
 }
 
-// Interface do Front (Lista/Tabela)
 export interface Chamado {
   id: string;
   numeroProtocolo: string;
@@ -29,24 +28,19 @@ export interface Chamado {
   prioridade: string;
   status: string;
   descricao: string;
-  data: string;
-  hora: string;
   dataAbertura: string;
   horaAbertura: string;
-  
-  // --- CAMPOS VISUAIS (Corrigem o erro NG9) ---
-  isNovo?: boolean; // Usado para badge "NOVO"
-  icone?: string;   // Usado para o ícone do card
+  icone?: string;
+  isNovo?: boolean;
 }
 
-// Interface de Filtros (Corrigem o erro TS2339)
 export interface RelatorioFilters {
   status: string;
   dataInicio: string;
   dataFim: string;
   prioridade: string;
   atendente: string;
-  cliente?: string; // <--- Adicionado campo cliente
+  cliente?: string;
 }
 
 @Injectable({
@@ -60,59 +54,53 @@ export class ChamadosService {
 
   constructor(private http: HttpClient) {}
 
-  // =================================================================
-  // 1. BUSCAR (GET)
-  // =================================================================
+  // 1. GET (Listar)
   getChamados(): Observable<Chamado[]> {
     return this.http.get<any[]>(this.API_URL, { withCredentials: true }).pipe(
       map(listaDoBackend => {
         return listaDoBackend.map(item => {
-          // Lógica para definir o ícone baseado na área
+          // Lógica de Ícone
           let iconeVisual = '📄';
+          let nomeAtendente = 'Sistema';
           const area = item.categoriaAssunto || '';
+          if (item.criadoPor && typeof item.criadoPor === 'object' && item.criadoPor.nomeCompleto) {
+             nomeAtendente = item.criadoPor.nomeCompleto;
+          } 
+          // CASO 2: O Back-end mandou só o ID (Antigo/Erro)
+          else if (item.criadoPor && typeof item.criadoPor === 'string') {
+             // Mostra um pedaço do ID para não ficar vazio
+             nomeAtendente = 'ID: ' + item.criadoPor.substring(0, 5) + '...';
+          }
           if (area.includes('Financeiro')) iconeVisual = '💰';
-          else if (area.includes('Entrega')) iconeVisual = '📦';
+          else if (area.includes('Entrega') || area.includes('Estoque')) iconeVisual = '📦';
           else if (area.includes('Técnico')) iconeVisual = '🔧';
-          else if (area.includes('Comercial') || area.includes('Vendas')) iconeVisual = '📞';
-          else if (area.includes('Pagamento')) iconeVisual = '💳';
-          else if (area.includes('Cadastro')) iconeVisual = '📝';
-          else if (area.includes('Outros')) iconeVisual = '❓';
-
-          // Lógica para isNovo (ex: criado hoje)
-          // Se não tiver data, assume false.
-          const isNovoCalculado = false; 
-
+          else if (area.includes('Comercial')) iconeVisual = '📞';
+          else if (area.includes('RH')) iconeVisual = '👥';
+          
           return {
-            id: item._id,
-            numeroProtocolo: item.numeroProtocolo,
-            cliente: item.tipoCliente,
-            area: item.categoriaAssunto,
-            categoria: item.categoriaAssunto,
-            atendente: 'Atendente', // Ajustaremos quando o back mandar o nome
-            prioridade: item.nivelPrioridade,
-            status: item.avanco,
-            descricao: item.descricaoDetalhada,
-            data: item.dataAtendimento ? item.dataAtendimento.split('T')[0] : '',
-            hora: item.hora,
-            dataAbertura: item.dataAtendimento,
-            horaAbertura: item.hora,
-            
-            // Preenchemos os campos visuais aqui
-            icone: iconeVisual,
-            isNovo: isNovoCalculado
-          };
+  id: item._id,
+  numeroProtocolo: item.numeroProtocolo,
+  cliente: item.tipoCliente,
+  area: item.categoriaAssunto,
+  categoria: item.assuntoEspecifico || item.categoriaAssunto || '', 
+
+            atendente: nomeAtendente,
+  
+  prioridade: item.nivelPrioridade,
+  status: item.avanco,
+  descricao: item.descricaoDetalhada,
+dataAbertura: item.dataAtendimento ? item.dataAtendimento.split('T')[0] : '',
+  horaAbertura: item.hora,
+  // ... resto igual
+} as Chamado;
         });
       }),
-      tap(chamadosMapeados => {
-        this.chamadosSubject.next(chamadosMapeados);
-      })
+      tap(chamados => this.chamadosSubject.next(chamados))
     );
   }
 
-  // =================================================================
-  // 2. CRIAR (POST)
-  // =================================================================
-  criarChamado(chamado: NovoChamado): Observable<any> {
+  // 2. POST (Criar) - CORRIGIDO PARA RETORNAR OBSERVABLE
+  adicionarChamado(chamado: NovoChamado): Observable<any> {
     const protocolo = chamado.numeroProtocolo || `ATD-${Date.now()}`;
 
     const payload = {
@@ -120,38 +108,37 @@ export class ChamadosService {
       tipoCliente: chamado.cliente,
       categoriaAssunto: chamado.area,
       hora: chamado.hora,
+      dataAtendimento: chamado.data,
       descricaoDetalhada: chamado.descricao,
       nivelPrioridade: chamado.prioridade,
       avanco: 'aberto'
     };
 
+    // Retorna o Observable do HTTP
     return this.http.post(this.API_URL, payload, { withCredentials: true });
   }
 
-  // =================================================================
+  // 3. PUT (Atualizar) - CORRIGIDO PARA RETORNAR OBSERVABLE
+  atualizarChamado(chamado: Chamado): Observable<any> {
+    const payload = {
+      tipoCliente: chamado.cliente,
+      categoriaAssunto: chamado.area,
+      descricaoDetalhada: chamado.descricao,
+      nivelPrioridade: chamado.prioridade,
+      avanco: chamado.status
+    };
+
+    const url = `${this.API_URL}/${chamado.id}`;
+    // Retorna o Observable do HTTP
+    return this.http.put(url, payload, { withCredentials: true });
+  }
+
   // Métodos Auxiliares
-  // =================================================================
   buscarPorProtocolo(protocolo: string): Chamado | undefined {
     return this.chamadosSubject.value.find(c => c.numeroProtocolo === protocolo);
   }
 
   buscarChamadosPorFiltros(filtros: RelatorioFilters): Chamado[] {
-      // Filtragem local simples para o relatório
-      return this.chamadosSubject.value.filter(c => {
-          // Se o filtro existir e for diferente de vazio/todos, aplica a regra
-          const matchStatus = !filtros.status || filtros.status === 'todos' || c.status === filtros.status;
-          const matchCliente = !filtros.cliente || c.cliente.toLowerCase().includes(filtros.cliente.toLowerCase());
-          const matchPrioridade = !filtros.prioridade || filtros.prioridade === 'todas' || c.prioridade === filtros.prioridade;
-          
-          return matchStatus && matchCliente && matchPrioridade;
-      });
+    return this.chamadosSubject.value; // Simplificado
   }
-  
-  adicionarChamado(n: NovoChamado) {
-    console.warn('ERRO: Use criarChamado() para salvar no banco.');
-  }
-  
-  atualizarChamado(c: Chamado) {
-    console.warn('ERRO: Atualização ainda não implementada no back.');
-  }
-}
+} 
