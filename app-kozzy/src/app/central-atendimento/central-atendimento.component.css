@@ -957,4 +957,50 @@
   padding: 10px 20px !important;
 }
 
+/* ... (Mantenha o CSS base que você já tem) ... */
 
+/* BOTÕES DE FILTRO MENORES (Origem) */
+.filter-btn.small {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 20px;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  color: #555;
+  font-weight: 500;
+  margin-right: 5px;
+}
+
+.filter-btn.small:hover {
+  background-color: #f9f9f9;
+  border-color: #ccc;
+}
+
+.filter-btn.small.active {
+  background-color: #333; /* Cor escura para diferenciar */
+  color: white;
+  border-color: #333;
+}
+
+/* ÍCONE DE ORIGEM NO CARD */
+.origin-icon {
+  font-size: 18px;
+  margin-right: 12px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* TEXTO QUANDO O ID É OCULTO (Email) */
+.card-number.system-id {
+  color: #9ca3af; /* Cinza claro */
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}

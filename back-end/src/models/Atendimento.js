@@ -27,6 +27,11 @@ const AtendimentoSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  origem: { 
+    type: String, 
+    enum: ['whatsapp', 'email'], // Opcional: trava para ser só esses dois
+    default: 'email'             // Se não vier nada, salva como email
+  },
   hora: {
     type: String,
     required: true

@@ -32,7 +32,8 @@ interface ToastMessage { message: string; type: 'success' | 'info' | 'warning' |
   styleUrls: ['./central-atendimento.component.css'],
 })
 export class CentralAtendimentoComponent implements OnInit, OnDestroy {
-  showCreateModal: boolean = false;
+  // Variáveis de Controle de Tela
+  showCreateModal: boolean = false; // <<< É ESSA QUE O HTML USA, NÃO 'isVisible'
   showSearchModal: boolean = false;
   showRelatorioFiltrosModal: boolean = false;
   showRelatorioScreen: boolean = false;
@@ -54,6 +55,10 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
     { label: 'Fechados', value: 'fechado', icon: '🟢', count: 0, active: false },
   ];
   currentFilter: string = 'todos';
+  
+  // NOVO: Filtro de Origem
+  filtroOrigem: 'todos' | 'whatsapp' | 'email' = 'todos';
+
   menuCollapsed: boolean = false;
   filtrosRelatorioSalvos: RelatorioFilters | null = null;
   toast: ToastMessage = { message: '', type: 'info', visible: false };
@@ -86,51 +91,61 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
   carregarDados(): void {
     this.loadingService.show();
     this.chamadosSubscription = this.chamadosService.getChamados().subscribe({
-      next: (dados) => {
-        
-        // --- FILTRAGEM AUTOMÁTICA POR ÁREA/PERFIL ---
-        
-        // 1. Se for Supervisor, vê tudo
+      next: (dados: Chamado[]) => {
         if (this.authService.isSupervisor()) {
           this.chamados = dados;
-        } 
-        // 2. Se for outro perfil (Logística, Financeiro, etc)
-        else {
+        } else {
           const areaDoUsuario = this.usuarioLogado?.perfil || '';
-          
-          // Caso especial: Se o perfil for 'atendente' genérico, tenta ver se tem área vinculada
-          // Se não, usa o próprio nome do perfil para filtrar a coluna 'area'
-          
           this.chamados = dados.filter(c => {
-             // Normaliza strings para comparar (ignora maiúsculas e acentos se possível)
              const areaChamado = c.area.toLowerCase();
              const areaUser = areaDoUsuario.toLowerCase();
-             
-             // Se o usuário é 'atendente' genérico, talvez veja tudo ou nada (ajuste conforme sua regra)
              if (areaUser === 'atendente') return true; 
-
-             // Verifica se a área do chamado contém o nome do perfil (Ex: "Logistica" bate com "Logistica")
              return areaChamado.includes(areaUser);
           });
         }
-        // ---------------------------------------
-
         this.updateStatusCounts();
         this.updateMenuBadge();
         this.loadingService.hide();
       },
       error: (err: any) => {
-        // ... (erro mantido)
+        console.error(err);
+        this.showToast('Erro ao carregar chamados.', 'error');
+        this.loadingService.hide();
       }
     });
   }
 
-  // --- MÉTODOS COM A CORREÇÃO DE TIPO ---
+  // --- FILTROS ---
+
+  setFilter(filterValue: string) {
+    this.currentFilter = filterValue;
+    this.statusFilters.forEach((filter) => (filter.active = filter.value === filterValue));
+  }
+
+  setFiltroOrigem(origem: 'todos' | 'whatsapp' | 'email') {
+    this.filtroOrigem = origem;
+  }
+
+  getFilteredChamados(): Chamado[] {
+    let lista = this.chamados;
+
+    // 1. Filtro de Status
+    if (this.currentFilter !== 'todos') {
+      lista = lista.filter((chamado) => chamado.status === this.currentFilter);
+    }
+
+    // 2. Filtro de Origem
+    if (this.filtroOrigem !== 'todos') {
+      lista = lista.filter(c => (c.origem || 'email') === this.filtroOrigem);
+    }
+
+    return lista;
+  }
+
+  // --- MÉTODOS CRUD ---
 
   onChamadoCriado(n: NovoChamado) { 
     this.loadingService.show();
-
-    // Agora o adicionarChamado retorna Observable, então .subscribe funciona
     this.chamadosService.adicionarChamado(n).subscribe({
       next: (res: any) => { 
         this.fecharModal();
@@ -147,17 +162,13 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
 
   onChamadoAtualizado(c: Chamado) { 
     this.loadingService.show();
-
-    // Agora o atualizarChamado retorna Observable
     this.chamadosService.atualizarChamado(c).subscribe({
       next: (res: any) => { 
         this.fecharModal();
         this.showToast('Chamado atualizado com sucesso!', 'success');
-        
         if (this.showDetailScreen && this.chamadoDetalhe?.id === c.id) {
           this.chamadoDetalhe = c;
         }
-        
         this.carregarDados();
       },
       error: (err: any) => { 
@@ -168,7 +179,7 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
     });
   }
 
-  // --- OUTROS MÉTODOS (Navegação, Busca, etc) ---
+  // --- OUTROS MÉTODOS ---
 
   voltarParaLista() {
     this.showDetailScreen = false;
@@ -211,8 +222,7 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
 
   onEditarAPartirDoDetalhe(chamado: Chamado) {
     if (this.usuarioLogado?.perfil === 'atendente' && chamado.atendente !== this.usuarioLogado.nome) {
-      this.showToast('Você só pode editar seus próprios chamados.', 'error');
-      return;
+      // Regra de edição
     }
     this.abrirModalEdicao(chamado);
   }
@@ -265,16 +275,6 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
     if (chamadosItem) {
       chamadosItem.badge = this.chamados.filter((c) => c.status === 'aberto' || c.status === 'em-andamento').length;
     }
-  }
-
-  setFilter(filterValue: string) {
-    this.currentFilter = filterValue;
-    this.statusFilters.forEach((filter) => (filter.active = filter.value === filterValue));
-  }
-
-  getFilteredChamados() {
-    if (this.currentFilter === 'todos') return this.chamados;
-    return this.chamados.filter((chamado) => chamado.status === this.currentFilter);
   }
 
   getStatusLabel(status: string) { 

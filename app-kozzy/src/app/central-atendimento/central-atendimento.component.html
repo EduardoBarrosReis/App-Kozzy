@@ -11,11 +11,19 @@
     <nav class="menu" style="flex: 1; margin-top: 20px;">
       <ul class="menu-list">
         <li *ngFor="let item of menuItems">
-          <button class="menu-item" [class.active]="item.active" (click)="item.action ? item.action() : null">
-            <span class="menu-icon">{{ item.icon }}</span>
-            <span class="menu-label" *ngIf="!menuCollapsed">{{ item.label }}</span>
-            <span class="menu-badge" *ngIf="item.badge && !menuCollapsed">{{ item.badge }}</span>
-          </button>
+          <ng-container *ngIf="item.action">
+            <button class="menu-item" [class.active]="item.active" (click)="item.action()">
+                <span class="menu-icon">{{ item.icon }}</span>
+                <span class="menu-label" *ngIf="!menuCollapsed">{{ item.label }}</span>
+                <span class="menu-badge" *ngIf="item.badge && !menuCollapsed">{{ item.badge }}</span>
+            </button>
+          </ng-container>
+          <ng-container *ngIf="item.route">
+            <a [routerLink]="item.route" routerLinkActive="active" class="menu-item" style="text-decoration: none;">
+                <span class="menu-icon">{{ item.icon }}</span>
+                <span class="menu-label" *ngIf="!menuCollapsed">{{ item.label }}</span>
+            </a>
+          </ng-container>
         </li>
       </ul>
     </nav>
@@ -32,31 +40,55 @@
       <header class="header">
         <div class="header-content">
           <div class="header-title"><h2>Central de Atendimento</h2><p>Gerencie todos os chamados e solicitações</p></div>
-          <div class="header-actions"><button class="btn btn-primary" (click)="abrirModalCriarChamado()">+ Novo Chamado</button></div>
+          <div class="header-actions">
+            <button class="btn btn-primary" 
+                    *ngIf="authService.podeGerenciarChamados()"
+                    (click)="abrirModalCriarChamado()">
+              + Novo Chamado
+            </button>
+          </div>
         </div>
       </header>
 
       <div class="filters-section" style="padding: 0 30px; margin-top: 20px;">
-        <div class="filters-list">
+        <div class="filters-list" style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
             <button class="filter-btn" *ngFor="let filter of statusFilters" [class.active]="filter.active" (click)="setFilter(filter.value)">
                 {{ filter.icon }} {{ filter.label }} <span class="filter-count">{{ filter.count }}</span>
             </button>
+        </div>
+
+        <div class="filters-origin" style="display: flex; gap: 10px;">
+            <button class="filter-btn small" [class.active]="filtroOrigem === 'todos'" (click)="setFiltroOrigem('todos')">🌐 Todos</button>
+            <button class="filter-btn small" [class.active]="filtroOrigem === 'whatsapp'" (click)="setFiltroOrigem('whatsapp')">📱 WhatsApp</button>
+            <button class="filter-btn small" [class.active]="filtroOrigem === 'email'" (click)="setFiltroOrigem('email')">📧 E-mail</button>
         </div>
       </div>
 
       <div class="content">
         <div class="chamados-grid">
             <div class="chamado-card" *ngFor="let chamado of getFilteredChamados()" (click)="onSelectChamado(chamado)" [class.novo-chamado]="chamado.isNovo">
+            
             <div class="card-header">
                 <div class="card-header-left">
-                <div class="card-icon">{{ chamado.icone }}</div>
+                
+                <div class="origin-icon" 
+                     [title]="chamado.origem === 'whatsapp' ? 'Via WhatsApp' : 'Via E-mail'">
+                    {{ chamado.origem === 'whatsapp' ? '📱' : '📧' }}
+                </div>
+
                 <div class="card-info">
-                    <div class="card-number-priority"><span class="card-number">#{{ chamado.numeroProtocolo }}</span><div class="priority-indicator" [class]="'priority-' + chamado.prioridade"></div></div>
+                    <div class="card-number-priority">
+                        <span class="card-number" *ngIf="chamado.origem === 'whatsapp'">#{{ chamado.numeroProtocolo }}</span>
+                        <span class="card-number system-id" *ngIf="chamado.origem !== 'whatsapp'">VIA SISTEMA</span>
+
+                        <div class="priority-indicator" [class]="'priority-' + chamado.prioridade"></div>
+                    </div>
                     <h3 class="card-title">{{ chamado.cliente }}</h3>
                 </div>
                 </div>
                 <span class="status-badge" [class]="'status-' + chamado.status">{{ getStatusLabel(chamado.status) }}</span>
             </div>
+
             <div class="card-content">
                 <p class="card-description">{{ chamado.descricao }}</p>
                 <div class="card-details">
@@ -91,7 +123,7 @@
 </div>
 
 <app-create-ticket-modal
-  [isVisible]="showCreateModal"
+  [isVisible]="showCreateModal" 
   [chamadoParaEditar]="chamadoSelecionado"
   [perfilUsuario]="usuarioLogado?.perfil || 'atendente'"
   [usuarioLogadoNome]="usuarioLogado?.nome || ''"

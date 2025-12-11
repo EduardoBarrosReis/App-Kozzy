@@ -15,6 +15,7 @@ export const criarAtendimento = async (req, res) => {
     });
     await novoAtendimento.save();
     res.status(201).json(novoAtendimento);
+    
   } catch (error) {
     console.error("❌ ERRO AO SALVAR:", error);
     res.status(500).json({ message: "Erro ao criar atendimento", error });
