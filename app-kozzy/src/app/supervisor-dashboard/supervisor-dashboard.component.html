@@ -67,15 +67,30 @@
           <div *ngFor="let chamado of getChamadosFiltrados()" 
                class="chamado-card"
                (click)="onSelectChamado(chamado)">
-             <div class="card-header"><span class="card-number">#{{ chamado.numeroProtocolo }}</span><span class="status-badge" [class]="getStatusClass(chamado.status)">{{ getStatusLabel(chamado.status) }}</span></div>
+             
+             <div class="card-header">
+                <div class="card-header-left">
+                    <div class="origin-icon" [title]="chamado.origem === 'whatsapp' ? 'Via WhatsApp' : 'Via E-mail'">
+                        {{ chamado.origem === 'whatsapp' ? '📱' : '📧' }}
+                    </div>
+                    <div class="card-info">
+                         <div class="card-number-priority">
+                             <span class="card-number" *ngIf="chamado.origem === 'whatsapp'">#{{ chamado.numeroProtocolo }}</span>
+                             <span class="card-number system-id" *ngIf="chamado.origem !== 'whatsapp'">VIA SISTEMA</span>
+                         </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="status-badge" [class]="getStatusClass(chamado.status)">{{ getStatusLabel(chamado.status) }}</span>
+                    
+                    </div>
+             </div>
+
              <div class="card-content">
                 <h3 class="card-title">{{ chamado.cliente }}</h3>
                 <p class="card-description">{{ chamado.descricao }}</p>
-                <div class="card-details">
-                    <div class="detail-item"><p class="detail-label">Departamento</p><p class="detail-value">{{ chamado.area || 'Geral' }}</p></div>
-                    <div class="detail-item"><p class="detail-label">Atendente</p><p class="detail-value">{{ chamado.atendente }}</p></div>
                 </div>
-             </div>
              <div class="card-footer"><span class="card-meta">📅 {{ chamado.dataAbertura | date: 'dd/MM/yyyy' }} às {{ chamado.horaAbertura }}</span><a class="details-btn">Ver detalhes →</a></div>
           </div>
         </div>
@@ -147,8 +162,8 @@
         [chamado]="chamadoDetalhe"
         [usuarioLogado]="usuarioLogado"
         (close)="fecharTelaDetalhes()"
-        (edit)="onEditarAPartirDoDetalhe($event)">
-    </app-ticket-detail>
+        (edit)="onEditarAPartirDoDetalhe($event)"
+        (deleteTicket)="excluirChamadoDoDetalhe($event)"> </app-ticket-detail>
 
     <app-relatorio-screen 
         *ngIf="showRelatorioScreen" 

@@ -148,7 +148,42 @@
 .meta-row:last-child { border-bottom: none; }
 .meta-label { color: #64748b; }
 .meta-value { font-weight: 600; color: #334155; }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Espaço entre os botões */
+}
 
+/* Estilo do Botão Editar (Mantido) */
+.btn-edit {
+  background-color: #3b82f6; /* Azul para editar (sugestão para diferenciar) */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-edit:hover { background-color: #2563eb; }
+
+/* NOVO: Estilo do Botão Excluir */
+.btn-delete {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-delete:hover {
+  background-color: #dc2626;
+  color: white;
+  border-color: #dc2626;
+}
 @media (max-width: 768px) {
   .detail-body { grid-template-columns: 1fr; }
   .detail-header { flex-direction: column; gap: 15px; align-items: flex-start; }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chamado } from '../chamados.service';
 import { UsuarioLogado } from '../auth.service';
@@ -16,23 +16,29 @@ export class TicketDetailComponent {
   
   @Output() close = new EventEmitter<void>();
   @Output() edit = new EventEmitter<Chamado>();
+  @Output() deleteTicket = new EventEmitter<string>(); // <--- NOVO OUTPUT
 
   onClose() {
     this.close.emit();
   }
 
-  // Lógica de verificação
+  // Verifica se é Supervisor para mostrar o botão de Excluir
+  isSupervisor(): boolean {
+    return this.usuarioLogado?.perfil === 'supervisor';
+  }
+
+  onDelete() {
+    // A confirmação fica aqui ou no componente pai. 
+    // Vamos emitir o evento e deixar o pai confirmar e apagar.
+    this.deleteTicket.emit(this.chamado.id);
+  }
+
+  // Lógica de Edição (Mantida)
   podeEditar(): boolean {
     if (!this.usuarioLogado || !this.chamado) return false;
-
-    // 1. Supervisor: Pode tudo
     if (this.usuarioLogado.perfil === 'supervisor') return true;
 
-    // 2. Atendente:
-    // - Deve ser o dono do chamado (nome igual)
     const nomeBate = this.usuarioLogado.nome.toLowerCase() === (this.chamado.atendente || '').toLowerCase();
-    
-    // - E deve ter a área do chamado nas suas permissões
     const areasDoUsuario = this.usuarioLogado.areas || [];
     const areaDoChamado = this.chamado.area;
     const areaBate = areasDoUsuario.includes(areaDoChamado);
@@ -44,13 +50,7 @@ export class TicketDetailComponent {
     if (this.podeEditar()) {
       this.edit.emit(this.chamado);
     } else {
-      let motivo = '';
-      if (this.usuarioLogado?.nome.toLowerCase() !== (this.chamado.atendente || '').toLowerCase()) {
-          motivo = 'Você não é o responsável por este chamado.';
-      } else {
-          motivo = 'Este chamado pertence a uma área que você não tem acesso.';
-      }
-      alert(`⛔ ACESSO NEGADO\n\n${motivo}`);
+      alert(`⛔ ACESSO NEGADO\n\nVocê não tem permissão para editar este chamado.`);
     }
   }
 

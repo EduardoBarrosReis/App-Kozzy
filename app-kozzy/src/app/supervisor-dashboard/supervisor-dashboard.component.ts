@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { AuthService, UsuarioLogado } from '../auth.service';
 import { ChamadosService, Chamado, NovoChamado, RelatorioFilters } from '../chamados.service';
+// Se você tiver o LoadingService, mantenha. Se não, remova o import e o uso no construtor.
+import { LoadingService } from '../loading.service'; 
 
 import { CreateTicketModalComponent } from '../create-ticket-modal/create-ticket-modal.component';
 import { CriarUsuarioModalComponent } from '../criar-usuario-modal/criar-usuario-modal.component';
@@ -59,35 +61,45 @@ export class SupervisorDashboardComponent implements OnInit, OnDestroy {
   chamados: Chamado[] = [];
   private chamadosSubscription!: Subscription;
 
-  // --- NOVA VARIÁVEL: Controla qual tela aparece ---
   viewMode: 'dashboard' | 'usuarios' = 'dashboard';
   listaUsuarios: any[] = [];
 
   constructor(
     private router: Router, 
     public authService: AuthService,
-    private chamadosService: ChamadosService
+    private chamadosService: ChamadosService,
+    private loadingService: LoadingService // Remova se não tiver o serviço criado
   ) {}
 
   ngOnInit() {
     this.usuarioLogado = this.authService.getUsuarioLogado();
+    this.carregarDados(); // Carrega os chamados ao iniciar
     
-    // MENU CONFIGURADO CORRETAMENTE
     this.menuItems = [
-      // Ao clicar aqui, ele chama mudarVista('dashboard') que volta para os chamados
       { label: 'Visão Geral', icon: '👑', action: () => this.mudarVista('dashboard'), active: true },
       { label: 'Gerenciar Equipe', icon: '👥', action: () => this.mudarVista('usuarios') },
       { label: 'Buscar Protocolo', icon: '🔍', action: () => this.abrirModalBuscaProtocolo() },
       { label: 'Relatórios', icon: '📊', action: () => this.abrirModalRelatorios() },
       { label: 'Configurações', icon: '⚙️', route: '/configuracoes' },
+      { label: 'Design System', icon: '🎨', route: '/design-system' }
     ];
     
     this.checkScreenSize();
     window.addEventListener('resize', this.checkScreenSize.bind(this));
-    
-    this.chamadosSubscription = this.chamadosService.chamados$.subscribe(novosChamados => {
-      this.chamados = novosChamados; 
-      this.calcularKPIs();
+  }
+
+  carregarDados() {
+    // Se tiver LoadingService use: this.loadingService.show();
+    this.chamadosSubscription = this.chamadosService.getChamados().subscribe({
+        next: (dados) => {
+            this.chamados = dados;
+            this.calcularKPIs();
+            // this.loadingService.hide();
+        },
+        error: (err) => {
+            console.error(err);
+            // this.loadingService.hide();
+        }
     });
   }
 
@@ -96,24 +108,45 @@ export class SupervisorDashboardComponent implements OnInit, OnDestroy {
     window.removeEventListener('resize', this.checkScreenSize.bind(this)); 
   }
 
-  // --- LÓGICA DE NAVEGAÇÃO DE VISTAS ---
+  // --- NOVA FUNÇÃO DE EXCLUIR ---
+  excluirChamadoDoDetalhe(id: string) {
+    if (confirm('Tem certeza que deseja EXCLUIR este chamado permanentemente?')) {
+        // this.loadingService.show();
+        
+        this.chamadosService.deletarChamado(id).subscribe({
+            next: () => {
+                this.showToast('Chamado excluído com sucesso!', 'success');
+                
+                // IMPORTANTE: Fechar a tela de detalhes pois o chamado não existe mais
+                this.fecharTelaDetalhes();
+                
+                // Recarregar a lista
+                this.carregarDados();
+            },
+            error: (err) => {
+                console.error(err);
+                this.showToast('Erro ao excluir chamado.', 'error');
+                // this.loadingService.hide();
+            }
+        });
+    }
+  }
+
   mudarVista(modo: 'dashboard' | 'usuarios') {
     this.viewMode = modo;
     
-    // Atualiza o item ativo no menu
     this.menuItems.forEach(i => {
       i.active = (i.label === 'Visão Geral' && modo === 'dashboard') || 
                  (i.label === 'Gerenciar Equipe' && modo === 'usuarios');
     });
 
-    // Se mudou para dashboard, garante que detalhes e relatórios fechem
     if (modo === 'dashboard') {
         this.showDetailScreen = false;
         this.showRelatorioScreen = false;
         this.chamadoDetalhe = null;
+        this.carregarDados();
     }
     
-    // Se mudou para usuários, carrega a lista
     if (modo === 'usuarios') {
       this.carregarUsuarios();
     }
@@ -145,8 +178,6 @@ export class SupervisorDashboardComponent implements OnInit, OnDestroy {
       });
     }
   }
-
-  // --- MÉTODOS EXISTENTES (Mantidos) ---
   
   onSelectChamado(chamado: Chamado): void {
     this.chamadoDetalhe = chamado;
@@ -186,23 +217,32 @@ export class SupervisorDashboardComponent implements OnInit, OnDestroy {
   fecharTicketModal() { this.showTicketModal = false; this.chamadoSelecionado = null; }
   
   onChamadoAtualizado(c: Chamado) {
-    this.chamadosService.atualizarChamado(c);
-    this.fecharTicketModal();
-    if (this.showDetailScreen && this.chamadoDetalhe?.id === c.id) { this.chamadoDetalhe = c; }
-    this.showToast('Atualizado com sucesso!', 'success');
+    this.chamadosService.atualizarChamado(c).subscribe({
+        next: () => {
+            this.fecharTicketModal();
+            if (this.showDetailScreen && this.chamadoDetalhe?.id === c.id) { this.chamadoDetalhe = c; }
+            this.showToast('Atualizado com sucesso!', 'success');
+            this.carregarDados();
+        }, 
+        error: () => this.showToast('Erro ao atualizar', 'error')
+    });
   }
   
   abrirModalCriarChamado() { this.chamadoSelecionado = null; this.showTicketModal = true; }
   onChamadoCriado(n: NovoChamado) {
-    this.chamadosService.adicionarChamado(n);
-    this.fecharTicketModal();
-    this.showToast('Criado com sucesso!', 'success');
+    this.chamadosService.adicionarChamado(n).subscribe({
+        next: () => {
+            this.fecharTicketModal();
+            this.showToast('Criado com sucesso!', 'success');
+            this.carregarDados();
+        },
+        error: () => this.showToast('Erro ao criar', 'error')
+    });
   }
 
   abrirModalCriarUsuario() { this.showCriarUsuarioModal = true; }
   fecharModalCriarUsuario() { this.showCriarUsuarioModal = false; }
   
-  // Atualizado para recarregar lista se estiver nela
   onUsuarioCriado(msg: string) { 
       this.showToast(msg, 'success'); 
       this.fecharModalCriarUsuario(); 

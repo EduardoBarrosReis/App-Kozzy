@@ -87,7 +87,6 @@ export class ChamadosService {
             categoria: item.assuntoEspecifico || item.categoriaAssunto || '', 
             
             // --- MAPEAMENTO DA ORIGEM ---
-            // Se o banco não tiver o campo (antigos), assume 'email'
             origem: item.origem || 'email',
 
             atendente: nomeAtendente,
@@ -136,6 +135,13 @@ export class ChamadosService {
     return this.http.put(url, payload, { withCredentials: true });
   }
 
+  // --- 4. DELETE (NOVO) ---
+  deletarChamado(id: string): Observable<any> {
+    const url = `${this.API_URL}/${id}`;
+    return this.http.delete(url, { withCredentials: true });
+  }
+
+  // Métodos Auxiliares
   buscarPorProtocolo(protocolo: string): Chamado | undefined {
     return this.chamadosSubject.value.find(c => c.numeroProtocolo === protocolo);
   }

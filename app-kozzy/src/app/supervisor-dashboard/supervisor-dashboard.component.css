@@ -1042,3 +1042,48 @@
   color: #111827;
   background-color: #f3f4f6;
 }
+.card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.origin-icon {
+  font-size: 18px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.card-number.system-id {
+  color: #9ca3af;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.btn-delete-card {
+  background: none; 
+  border: none; 
+  cursor: pointer; 
+  font-size: 16px;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  padding: 4px;
+}
+
+.btn-delete-card:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.card-info {
+    display: flex;
+    flex-direction: column;
+}

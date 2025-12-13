@@ -10,7 +10,11 @@
       </div>
     </div>
     
-    <div class="header-right">
+    <div class="header-right" style="display: flex; gap: 10px;">
+      <button *ngIf="isSupervisor()" class="btn-delete" (click)="onDelete()">
+        🗑️ Excluir
+      </button>
+
       <button class="btn-edit" (click)="onEdit()">
         ✎ Editar Chamado
       </button>
@@ -63,4 +67,4 @@
         </div>
       </div>
   </div>
-</div>  
+</div>
