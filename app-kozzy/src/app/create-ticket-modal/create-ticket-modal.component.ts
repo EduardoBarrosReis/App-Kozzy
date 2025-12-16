@@ -29,13 +29,18 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
   isLoading = false;
   showPreview = false;
 
-  // --- NOVA OPÇÃO: ORIGEM ---
+  // --- OPÇÕES DE STATUS (NOVO) ---
+  statusOptions: SelectOption[] = [
+    { value: 'aberto', label: '🔴 Aberto' },
+    { value: 'em-andamento', label: '🟡 Em Andamento' },
+    { value: 'fechado', label: '🟢 Concluído' }
+  ];
+
   origemOptions: SelectOption[] = [
     { value: 'email', label: '📧 E-mail' },
     { value: 'whatsapp', label: '📱 WhatsApp' }
   ];
 
-  // (Suas outras opções mantidas...)
   areaOptions: SelectOption[] = [
     { value: 'Logistica', label: '📦 Logística' },
     { value: 'Contas a Pagar', label: '💸 Contas a Pagar' },
@@ -81,7 +86,6 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
     this.filtrarAreasPermitidas();
   }
 
-  // (Carregar Atendentes e Filtrar Áreas mantidos iguais...)
   carregarAtendentes() {
     this.authService.getTodosUsuarios().subscribe({
       next: (usuarios) => {
@@ -131,9 +135,12 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
   }
 
   initializeForm() {
-    // Protocolo começa desabilitado (padrão é email)
     this.ticketForm = this.fb.group({
-      origem: ['email', Validators.required], // CAMPO NOVO
+      origem: ['email', Validators.required],
+      
+      // --- CAMPO STATUS (Adicionado) ---
+      status: ['aberto', Validators.required], 
+
       numeroProtocolo: [{ value: '', disabled: true }],
       cliente: ['', Validators.required],
       area: ['', Validators.required],
@@ -145,7 +152,6 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
       hora: [new Date().toTimeString().slice(0, 5)]
     });
 
-    // --- ESCUTAR MUDANÇAS NA ORIGEM ---
     this.ticketForm.get('origem')?.valueChanges.subscribe(origem => {
       this.atualizarValidacaoProtocolo(origem);
     });
@@ -156,14 +162,11 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
     if (!protocoloControl) return;
 
     if (origem === 'whatsapp') {
-      // Se for WhatsApp, vira obrigatório e habilita
       protocoloControl.setValidators([Validators.required]);
       protocoloControl.enable();
     } else {
-      // Se for Email, limpa, tira obrigatório e desabilita (ou esconde no HTML)
       protocoloControl.clearValidators();
       protocoloControl.setValue('');
-      // protocoloControl.disable(); // Opcional, se o HTML já esconde com *ngIf
     }
     protocoloControl.updateValueAndValidity();
   }
@@ -172,13 +175,15 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
     if (!this.chamadoParaEditar) return;
     const safeValue = (val: any) => val || '';
 
-    // Tenta descobrir a origem pelo protocolo (se for 'ATD-' é sistema/email)
-    // O ideal seria salvar 'origem' no banco, mas podemos inferir
     const protocolo = this.chamadoParaEditar.numeroProtocolo || '';
-    const origemInferida = protocolo.startsWith('ATD-') ? 'email' : 'whatsapp';
+    const origemInferida = this.chamadoParaEditar.origem || (protocolo.startsWith('ATD-') ? 'email' : 'whatsapp');
 
     this.ticketForm.patchValue({
       origem: origemInferida,
+      
+      // --- POPULAR O STATUS ---
+      status: this.chamadoParaEditar.status || 'aberto',
+
       numeroProtocolo: protocolo,
       cliente: safeValue(this.chamadoParaEditar.cliente),
       area: safeValue(this.chamadoParaEditar.area), 
@@ -190,7 +195,6 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
       hora: this.chamadoParaEditar.horaAbertura
     });
     
-    // Força a atualização da validação após popular
     this.atualizarValidacaoProtocolo(origemInferida);
   }
 
@@ -213,8 +217,7 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
         descricao: val.descricao,
         data: val.data,
         hora: val.hora,
-        // --- AQUI ESTÁ O SEGREDO ---
-        origem: val.origem // <--- Certifique-se que esta linha existe!
+        origem: val.origem
       };
 
       if (this.isEditMode && this.chamadoParaEditar) {
@@ -223,6 +226,8 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
           ...dadosComuns,
           categoria: val.assunto,
           numeroProtocolo: val.numeroProtocolo,
+          
+          // --- USA O STATUS SELECIONADO NA EDIÇÃO ---
           status: val.status 
         };
         this.chamadoAtualizado.emit(editado);
@@ -230,7 +235,10 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
         const novo: NovoChamado = {
           ...dadosComuns,
           numeroProtocolo: val.origem === 'whatsapp' ? val.numeroProtocolo : undefined,
-          status: 'aberto',
+          
+          // --- NA CRIAÇÃO, FORÇA ABERTO ---
+          status: 'aberto', 
+          
           dataHoraCriacao: new Date().toISOString()
         };
         this.chamadoCriado.emit(novo);
@@ -239,6 +247,7 @@ export class CreateTicketModalComponent implements OnInit, OnChanges {
     }, 200);
   }
 
+  // ... (Outros métodos: close, handlers, etc. mantidos iguais)
   close() { this.closeModal.emit(); }
   closeModalHandler() { this.close(); }
   onOverlayClick(event: MouseEvent) { if ((event.target as HTMLElement).classList.contains('modal-overlay')) { this.close(); } }

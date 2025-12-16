@@ -169,7 +169,8 @@
         *ngIf="showRelatorioScreen" 
         [chamados]="relatorioChamados" 
         (closeReportScreen)="fecharRelatorioScreen()"
-        (chamadoSelecionado)="onSelectChamado($event)"> </app-relatorio-screen>
+        (chamadoSelecionado)="onSelectChamado($event)"
+        (chamadoSelecionado)="onSelectChamadoDoRelatorio($event)"> </app-relatorio-screen>
 
   </main>
 </div>

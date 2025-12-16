@@ -15,8 +15,9 @@ const app = express();
 
 // Middlewares
 app.use(cors({
-  origin: "http://localhost:4200", // frontend Angular (ajuste conforme seu front)
-  credentials: true, // permite envio de cookies
+  origin: '*', // Temporário: libera para qualquer um. Depois trocaremos pela URL da Vercel.
+  credentials: true, // Importante para seus cookies/sessão
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 app.use(cookieParser());

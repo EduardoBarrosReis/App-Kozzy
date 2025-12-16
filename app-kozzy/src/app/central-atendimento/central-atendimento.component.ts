@@ -38,7 +38,7 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
   showRelatorioFiltrosModal: boolean = false;
   showRelatorioScreen: boolean = false;
   showDetailScreen: boolean = false;
-
+  origemDetalhe: 'dashboard' | 'relatorio' = 'dashboard';
   chamadoSelecionado: Chamado | null = null;
   chamadoDetalhe: Chamado | null = null;
   
@@ -188,15 +188,28 @@ export class CentralAtendimentoComponent implements OnInit, OnDestroy {
     this.setFilter('todos');
   }
 
-  onSelectChamado(chamado: Chamado) {
+  onSelectChamado(chamado: Chamado): void {
     this.chamadoDetalhe = chamado;
     this.showDetailScreen = true;
     this.showRelatorioScreen = false;
+    this.origemDetalhe = 'dashboard';
   }
-
-  fecharTelaDetalhes() {
+  onSelectChamadoDoRelatorio(chamado: Chamado): void {
+    this.chamadoDetalhe = chamado;
+    this.showDetailScreen = true;
+    
+    // IMPORTANTE: Não setamos showRelatorioScreen = false aqui imediatamente se quisermos manter o estado,
+    // mas geralmente escondemos para mostrar o detalhe full screen.
+    this.showRelatorioScreen = false; 
+    
+    this.origemDetalhe = 'relatorio'; // <--- Marca que veio do Relatório
+  }
+  fecharTelaDetalhes(): void {
     this.showDetailScreen = false;
     this.chamadoDetalhe = null;
+    if (this.origemDetalhe === 'relatorio') {
+        this.showRelatorioScreen = true;
+    }
   }
 
   abrirModalRelatorios() {

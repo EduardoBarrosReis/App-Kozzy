@@ -33,6 +33,13 @@
           <div class="error-message" *ngIf="hasFieldError('numeroProtocolo')">{{ getFieldError('numeroProtocolo') }}</div>
         </div>
 
+        <div class="form-group" *ngIf="isEditMode">
+            <label for="status" class="form-label required">Status / Situação <span class="field-info">*</span></label>
+            <select id="status" formControlName="status" class="form-select">
+              <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+        </div>
+
         <div class="form-group">
           <label for="cliente" class="form-label required">Tipo de Cliente <span class="field-info">*</span></label>
           <select id="cliente" formControlName="cliente" class="form-select" [class.error]="hasFieldError('cliente')">
@@ -91,7 +98,7 @@
              <h3>📋 Resumo</h3>
              <p><strong>Origem:</strong> {{ getPreviewData().origem }}</p>
              <p><strong>Protocolo:</strong> {{ getPreviewData().numeroProtocolo || 'Gerado Automaticamente' }}</p>
-             <p><strong>Cliente:</strong> {{ getPreviewData().cliente }}</p>
+             <p *ngIf="isEditMode"><strong>Status:</strong> {{ getPreviewData().status }}</p> <p><strong>Cliente:</strong> {{ getPreviewData().cliente }}</p>
              <p><strong>Área:</strong> {{ getPreviewData().area }}</p> 
              <p><strong>Assunto:</strong> {{ getPreviewData().assunto }}</p>
              <p><strong>Descrição:</strong> {{ getPreviewData().descricao }}</p>

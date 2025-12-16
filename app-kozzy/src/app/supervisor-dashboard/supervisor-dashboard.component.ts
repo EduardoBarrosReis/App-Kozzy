@@ -42,7 +42,7 @@ export class SupervisorDashboardComponent implements OnInit, OnDestroy {
   showRelatorioScreen: boolean = false;
   showSearchModal: boolean = false;
   showDetailScreen: boolean = false;
-  
+  origemDetalhe: 'dashboard' | 'relatorio' = 'dashboard';
   chamadoDetalhe: Chamado | null = null;
   chamadoSelecionado: Chamado | null = null;
   relatorioChamados: Chamado[] = [];
@@ -183,11 +183,24 @@ export class SupervisorDashboardComponent implements OnInit, OnDestroy {
     this.chamadoDetalhe = chamado;
     this.showDetailScreen = true;
     this.showRelatorioScreen = false;
+    this.origemDetalhe = 'dashboard';
   }
-
+  onSelectChamadoDoRelatorio(chamado: Chamado): void {
+    this.chamadoDetalhe = chamado;
+    this.showDetailScreen = true;
+    
+    // IMPORTANTE: Não setamos showRelatorioScreen = false aqui imediatamente se quisermos manter o estado,
+    // mas geralmente escondemos para mostrar o detalhe full screen.
+    this.showRelatorioScreen = false; 
+    
+    this.origemDetalhe = 'relatorio'; // <--- Marca que veio do Relatório
+  }
   fecharTelaDetalhes(): void {
     this.showDetailScreen = false;
     this.chamadoDetalhe = null;
+    if (this.origemDetalhe === 'relatorio') {
+        this.showRelatorioScreen = true;
+    }
   }
 
   abrirModalRelatorios(): void { 
